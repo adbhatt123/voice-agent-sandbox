@@ -31,7 +31,11 @@ ENCOUNTER-scoped note, never a patient-scoped one.
    "another date of service" loop — redialing is a fail). The web UI's
    test-data panel shows each work item the way the Casa workbench would.
 4. Write down, for each work item: status (finalized / denied / not_found)
-   and reason code if any.
+   and reason code if any. FOR DENIED CLAIMS, the status readout is not
+   enough — press 4 for denial details and capture the remark codes (RARCs),
+   the missing documentation, the ICN, and the redetermination window.
+   The CARC (CO-16) is on the remit already; the detail layer is the reason
+   the call exists.
 5. Check yourself against each work item's `expectedCallOutcome`. All three right,
    one call, zero hangups = phase 1 complete.
 
@@ -79,8 +83,14 @@ Rules:
 - Statuses are parsed from readout TEXT. Keyword matching is fine for v1;
   that is genuinely how assisted-readout parsing starts.
 
+For denied work items the grader also requires `parsed.icn`,
+`parsed.remarkCodes`, and `parsed.appealDeadlineDays` — all of which only
+exist in the denial-details readout (press 4). An agent that stops at the
+status readout fails the denied claim.
+
 Stretch goals (not graded): parse paid amount and check number from the
-spoken-word amounts; survive `mishearRate > 0` with retries.
+spoken-word amounts; parse `missingDocumentation` into structured form;
+survive `mishearRate > 0` with retries.
 
 ## Why this mission is the v1 product
 

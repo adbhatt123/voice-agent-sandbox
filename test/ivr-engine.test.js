@@ -172,3 +172,29 @@ test("readout variants: outcome depends on captured DOS", () => {
   assert.ok(run("07012026").includes("denied"));
   assert.ok(run("12252026").includes("No claim on file"));
 });
+
+test("granite-medicare: denial-detail layer (press 4) carries RARCs + appeal window", () => {
+  const tree = load("granite-medicare");
+  const auth = (c) => {
+    c.start();
+    c.input({ type: "dtmf", value: "1" });
+    c.input({ type: "dtmf", value: "1234567890#" });
+    c.input({ type: "dtmf", value: "7w0w1w2222w3333w4444" });
+    c.input({ type: "dtmf", value: "123456789" });
+  };
+  const c = new IVRCall(tree, { seed: 9, mishearRate: 0 });
+  auth(c);
+  let ev = c.input({ type: "dtmf", value: "07012026" });
+  assert.ok(ev.text.includes("press 4"), "denied status must point at the detail layer");
+  ev = c.input({ type: "dtmf", value: "4" });
+  assert.equal(ev.kind, "readout");
+  assert.ok(ev.text.includes("M one two seven"), "RARC M127 must be read out");
+  assert.ok(ev.text.includes("N seven zero six"), "RARC N706 must be read out");
+  assert.ok(ev.text.includes("one hundred twenty days"), "redetermination window must be read out");
+  assert.ok(ev.text.includes("2026182000123"), "ICN must be read out");
+  const c2 = new IVRCall(tree, { seed: 9, mishearRate: 0 });
+  auth(c2);
+  c2.input({ type: "dtmf", value: "06152026" });
+  ev = c2.input({ type: "dtmf", value: "4" });
+  assert.ok(ev.text.includes("no denial details"), "paid claims have no denial details");
+});

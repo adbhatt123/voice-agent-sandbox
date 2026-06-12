@@ -9,7 +9,12 @@
     "root": {
       "kind": "menu",
       "prompt": "For claim status, press 1 or say claim status. For eligibility, press 2 or say eligibility.",
-      "inputs": { "dtmf:1": "npi", "speech:claim status": "npi", "dtmf:2": "npi", "speech:eligibility": "npi" },
+      "inputs": {
+        "dtmf:1": "npi",
+        "speech:claim status": "npi",
+        "dtmf:2": "npi",
+        "speech:eligibility": "npi"
+      },
       "retryPrompt": "Sorry. For claim status, press 1. For eligibility, press 2.",
       "maxRetries": 2,
       "failText": "We are unable to continue. Please call again. Goodbye."
@@ -18,7 +23,9 @@
       "kind": "capture",
       "prompt": "Enter the ten digit provider N P I, followed by the pound key.",
       "capture": "npi",
-      "via": ["dtmf"],
+      "via": [
+        "dtmf"
+      ],
       "pattern": "^[0-9]{10}#?$",
       "invalidText": "That N P I is not valid.",
       "maxRetries": 2,
@@ -28,7 +35,9 @@
       "kind": "capture",
       "prompt": "Enter the six character P TAN. The P TAN begins with a letter. For letters, press the number key repeatedly until you reach the letter: for example, for the letter C, press 2 three times. Pause between characters. In this simulator, type the letter w for a pause.",
       "capture": "ptan",
-      "via": ["dtmf"],
+      "via": [
+        "dtmf"
+      ],
       "alphaDtmf": true,
       "pattern": "^[A-Z][0-9]{5}$",
       "invalidText": "That P TAN does not match our records format. Remember to pause between characters.",
@@ -40,7 +49,9 @@
       "kind": "capture",
       "prompt": "Enter the nine digit tax identification number.",
       "capture": "tin",
-      "via": ["dtmf"],
+      "via": [
+        "dtmf"
+      ],
       "pattern": "^[0-9]{9}$",
       "invalidText": "That tax I D is not valid.",
       "maxRetries": 2,
@@ -50,7 +61,9 @@
       "kind": "capture",
       "prompt": "Enter the eight digit date of service, month, day, year.",
       "capture": "dos",
-      "via": ["dtmf"],
+      "via": [
+        "dtmf"
+      ],
       "pattern": "^[0-9]{8}$",
       "invalidText": "That is not a valid date.",
       "maxRetries": 2,
@@ -61,23 +74,38 @@
       "template": "No claim on file for date of service {dos}.",
       "variantsOn": "dos",
       "variants": {
-        "06152026": "One claim on file for date of service {dos}, N P I {npi}, P TAN {ptan}. Claim status: finalized. Paid amount: one thousand two hundred forty dollars and ten cents. Payment date: the fourth of this month. Check number: nine nine zero one one. Remark code: none.",
-        "07012026": "One claim on file for date of service {dos}, N P I {npi}, P TAN {ptan}. Claim status: denied. Reason code: C O dash one six. Claim lacks information needed for adjudication. A remittance advice was mailed. Appeal rights apply.",
+        "06152026": "One claim on file for date of service {dos}, N P I {npi}, P TAN {ptan}. Internal control number 2026166000456. Claim status: finalized. Paid amount: one thousand two hundred forty dollars and ten cents. Payment date: the fourth of this month. Check number: nine nine zero one one. Remark code: none.",
+        "07012026": "One claim on file for date of service {dos}, N P I {npi}, P TAN {ptan}. Internal control number 2026182000123. Claim status: denied as of the twenty second of last month. Reason code: C O dash one six. Claim lacks information which is needed for adjudication. Two remark codes are on file. For denial details including remark codes, documentation needed, and appeal rights, press 4 after this message.",
         "*": "No claim on file for date of service {dos}. Please verify the date and try again."
       },
       "next": "again"
     },
     "again": {
       "kind": "menu",
-      "prompt": "For another date of service, press 1. To repeat this status, press 2. To end this call, press 3.",
-      "inputs": { "dtmf:1": "dos", "dtmf:2": "status", "dtmf:3": "goodbye" },
-      "retryPrompt": "I did not recognize that entry. This menu accepts a single key only. To check ANOTHER date of service, first press 1, then enter the date when prompted. To repeat the last status, press 2. To end the call, press 3.",
+      "prompt": "For another date of service, press 1. To repeat this status, press 2. For denial details, press 4. To end this call, press 3.",
+      "inputs": {
+        "dtmf:1": "dos",
+        "dtmf:2": "status",
+        "dtmf:3": "goodbye",
+        "dtmf:4": "denial-detail"
+      },
+      "retryPrompt": "I did not recognize that entry. This menu accepts a single key only. To check ANOTHER date of service, first press 1, then enter the date when prompted. To repeat the last status, press 2. For denial details, press 4. To end the call, press 3.",
       "maxRetries": 3,
       "failText": "Goodbye."
     },
     "goodbye": {
       "kind": "hangup",
       "prompt": "Thank you for using Granite Medicare self service. Goodbye."
+    },
+    "denial-detail": {
+      "kind": "readout",
+      "template": "There are no denial details on file for date of service {dos}.",
+      "variantsOn": "dos",
+      "variants": {
+        "07012026": "Denial details for date of service {dos}, internal control number 2026182000123. Reason code C O dash one six. Remark code M one two seven: missing patient medical record for this service. Remark code N seven zero six: documentation requested from the provider was not received, or was not received timely. To resolve, submit the physician chart notes and the drug administration record for this date of service. Submit by fax to 555 0199, or through the provider portal, reference the internal control number. A redetermination request may be filed within one hundred twenty days of the remittance advice date. The remittance advice was dated the twenty second of last month.",
+        "*": "There are no denial details on file for date of service {dos}."
+      },
+      "next": "again"
     }
   }
 }

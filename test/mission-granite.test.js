@@ -22,6 +22,14 @@ function gradeResult(got, wi) {
   assert.equal(pc.callOutcome, wi.expectedCallOutcome.callOutcome, `wrong callOutcome mapping for claim ${wi.encounter.claimNumber}`);
   assert.ok(typeof pc.notes === "string" && pc.notes.length > 0, `payerContact.notes must carry the readout evidence`);
   assert.ok(typeof pc.interactionId === "string" && pc.interactionId.length > 0, `payerContact.interactionId required (use a call reference)`);
+  if (wi.expectedCallOutcome.icn) {
+    assert.equal(got.parsed?.icn, wi.expectedCallOutcome.icn, `wrong/missing ICN for claim ${wi.encounter.claimNumber} (it is read out; capture it)`);
+  }
+  if (wi.expectedCallOutcome.remarkCodes) {
+    assert.deepEqual([...(got.parsed?.remarkCodes ?? [])].sort(), [...wi.expectedCallOutcome.remarkCodes].sort(),
+      `denied claims require the remark codes from the denial-details readout (press 4). The CARC alone is not why we call.`);
+    assert.equal(got.parsed?.appealDeadlineDays, wi.expectedCallOutcome.appealDeadlineDays, `capture the redetermination window`);
+  }
 }
 
 test("mission: the Granite Run (one call, Casa-shaped writeback per work item)", async (t) => {

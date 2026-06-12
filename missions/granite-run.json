@@ -1,6 +1,6 @@
 {
   "mission": "granite-run",
-  "schema": "casa.callPayer.v1 — field names are copied from the Casa platform verbatim: WorkItem + ArEncounter (prisma/schema.prisma) on the input side, and the Call Payer flow's PayerContactData + payer_contact note (payer-contact-modal.tsx, handlePayerContact) on the writeback side. Data is 100% synthetic.",
+  "schema": "casa.callPayer.v1 \u2014 field names are copied from the Casa platform verbatim: WorkItem + ArEncounter (prisma/schema.prisma) on the input side, and the Call Payer flow's PayerContactData + payer_contact note (payer-contact-modal.tsx, handlePayerContact) on the writeback side. Data is 100% synthetic.",
   "tree": "granite-medicare",
   "provider": {
     "name": "Sundance Infusion Center (FICTIONAL)",
@@ -30,7 +30,12 @@
         "daysInAR": 64
       },
       "dosDtmf": "06152026",
-      "expectedCallOutcome": { "status": "finalized", "reasonCode": null, "callOutcome": "Paid - Pending" }
+      "expectedCallOutcome": {
+        "status": "finalized",
+        "reasonCode": null,
+        "callOutcome": "Paid - Pending",
+        "icn": "2026166000456"
+      }
     },
     {
       "id": "wi_fake_gr002",
@@ -52,7 +57,21 @@
         "daysInAR": 48
       },
       "dosDtmf": "07012026",
-      "expectedCallOutcome": { "status": "denied", "reasonCode": "CO-16", "callOutcome": "Denied" }
+      "expectedCallOutcome": {
+        "status": "denied",
+        "reasonCode": "CO-16",
+        "callOutcome": "Denied",
+        "icn": "2026182000123",
+        "remarkCodes": [
+          "M127",
+          "N706"
+        ],
+        "missingDocumentation": [
+          "physician chart notes",
+          "drug administration record"
+        ],
+        "appealDeadlineDays": 120
+      }
     },
     {
       "id": "wi_fake_gr003",
@@ -74,14 +93,27 @@
         "daysInAR": 33
       },
       "dosDtmf": "08012026",
-      "expectedCallOutcome": { "status": "not_found", "reasonCode": null, "callOutcome": "Other" }
+      "expectedCallOutcome": {
+        "status": "not_found",
+        "reasonCode": null,
+        "callOutcome": "Other"
+      }
     }
   ],
   "writeback": {
     "endpoint": "POST /api/ar/workbench/items/{workItemId}/notes",
     "noteType": "payer_contact",
     "metadataShape": "PayerContactData: { interactionId, repName, callOutcome, expectedResolutionDate, promisedPaymentAmount, notes, pushToWeinfuse }",
-    "CALL_OUTCOMES": ["Claim in Process", "Additional Info Needed", "Denied", "Reprocessing", "Paid - Pending", "Transferred", "Unable to Reach", "Other"],
+    "CALL_OUTCOMES": [
+      "Claim in Process",
+      "Additional Info Needed",
+      "Denied",
+      "Reprocessing",
+      "Paid - Pending",
+      "Transferred",
+      "Unable to Reach",
+      "Other"
+    ],
     "phoneSource": "in production the dialed number comes from lookupPayerPhone(encounter.primaryPayer) in src/lib/payer-phone-directory"
   }
 }
