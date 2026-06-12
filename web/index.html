@@ -141,7 +141,7 @@ button.primary:hover{background:#7E211C}
       <h2>Simulation settings</h2>
       <label>Mishear rate <output id="mhOut">0.12</output></label>
       <input type="range" id="mh" min="0" max="1" step="0.01" value="0.12">
-      <label>Hold speed <output id="hsOut">fast</output></label>
+      <label title="Speeds up holds and realtime speech. Your 12s human input window stays fixed.">Speed (hold &amp; realtime) <output id="hsOut">fast</output></label>
       <input type="range" id="hs" min="0" max="2" step="1" value="0">
       <label title="Same seed = identical mishearing every run. Change it to get a different 'caller luck'.">Seed <output id="seedOut">42</output></label>
       <input type="range" id="seed" min="1" max="999" step="1" value="42">
@@ -348,13 +348,15 @@ function rtDial() {
   call = null;
   path = [];
   const TS = [0.06, 0.3, 1][+$("hs").value];
-  rt = new RealtimeCall(tree, { seed: +$("seed").value, mishearRate: +$("mh").value, timeScale: TS });
+  // Humans type slower than agents act: pin the silence window to 12 REAL
+  // seconds regardless of playback speed (graders use the scaled clock).
+  rt = new RealtimeCall(tree, { seed: +$("seed").value, mishearRate: +$("mh").value, timeScale: TS, inputTimeoutMs: 12000 / TS });
   $("feed").innerHTML = "";
   $("payerName").textContent = tree.payer.replace(" (FICTIONAL)", "");
   $("payerNum").textContent = tree.phone;
   setState("live");
   $("dock").classList.remove("disabled");
-  sys(`dialing ${tree.phone}… (REALTIME ×${TS}: it talks at speaking pace, silence times out, you can barge in)`);
+  sys(`dialing ${tree.phone}… (REALTIME ×${TS}: speech streams, you have 12s of silence per turn, input mid-prompt barges in)`);
   const timeoutMs = rt.inputTimeoutMs * TS;
   rt.onEvent((e) => {
     clearSilence();
