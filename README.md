@@ -6,9 +6,16 @@ PHI, zero real phone calls. Runs anywhere with Node 18+.
 
 ```bash
 npm test            # run all sandbox tests
-npm run call        # interactive: YOU are the agent, navigate a fake payer IVR
+npm run web         # browser UI: dial fake payers with a keypad + live transcript
+npm run call        # same thing in the terminal
 npm run demo        # watch the example agent navigate a tree programmatically
 ```
+
+The web UI (`npm run web`, then http://localhost:4321) is the nicest way to
+learn the trees: pick a payer, dial, press keypad buttons or type speech, and
+watch the transcript, hold progress, captured values, and node path update
+live. The mishear-rate, hold-speed, and seed sliders are the same knobs the
+tests use; the engine underneath is identical to what your agent imports.
 
 ## Setup (step by step)
 

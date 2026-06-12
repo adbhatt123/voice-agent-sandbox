@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voice Agent Sandbox</title>
+<style>
+:root{
+  --bg:#F7F5F2; --panel:#FFFFFF; --line:#E7E0DA; --ink:#241B1C; --soft:#6E6260;
+  --faint:#9C918E; --ruby:#9E2B25; --ruby-soft:#F6E9E6; --green:#1E7F4F; --green-bg:#E9F4EE;
+  --amber:#A66A12; --amber-bg:#FBF1DD; --red:#B3261E; --red-bg:#F9E9E7; --mono:ui-monospace,Menlo,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+header{display:flex;align-items:center;gap:12px;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{font-size:16px;font-weight:600}
+header .tag{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.08em;text-transform:uppercase}
+.layout{display:grid;grid-template-columns:300px 1fr 280px;flex:1;min-height:0}
+
+/* ---- left: payers + settings ---- */
+.side{border-right:1px solid var(--line);background:var(--panel);padding:18px;overflow-y:auto}
+.side h2,.right h2{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
+.payer{border:1.5px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:9px;cursor:pointer;transition:border-color .15s,background .15s}
+.payer:hover{border-color:#CDB8B0}
+.payer.active{border-color:var(--ruby);background:var(--ruby-soft)}
+.payer b{font-size:13.5px;display:block}
+.payer span{font-size:11.5px;color:var(--soft)}
+.payer .stars{float:right;color:var(--ruby);font-size:11px;letter-spacing:2px}
+.set{margin-top:20px}
+.set label{display:flex;justify-content:space-between;font-size:12px;color:var(--soft);margin:12px 0 4px}
+.set label output{font-family:var(--mono);color:var(--ink)}
+.set input[type=range]{width:100%;accent-color:var(--ruby)}
+.set .row{display:flex;gap:8px;margin-top:14px}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:9px;padding:8px 14px;font-size:13px;transition:background .12s}
+button:hover{background:#F4EEE9}
+button.primary{background:var(--ruby);border-color:var(--ruby);color:#fff;font-weight:600}
+button.primary:hover{background:#7E211C}
+.hint{font-size:11.5px;color:var(--faint);margin-top:16px;line-height:1.5}
+
+/* ---- center: the call ---- */
+.callcol{display:flex;flex-direction:column;min-width:0;min-height:0}
+.callbar{display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:1px solid var(--line);background:var(--panel)}
+.callbar .num{font-family:var(--mono);font-size:12.5px;color:var(--soft)}
+.state{margin-left:auto;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:100px}
+.state.idle{background:#EFEAE5;color:var(--soft)}
+.state.live{background:var(--amber-bg);color:var(--amber)}
+.state.hold{background:var(--amber-bg);color:var(--amber)}
+.state.rep{background:var(--green-bg);color:var(--green)}
+.state.done{background:var(--red-bg);color:var(--red)}
+.feed{flex:1;overflow-y:auto;padding:22px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:72%;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.45;animation:pop .18s ease}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+.msg.ivr{background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:4px;align-self:flex-start}
+.msg.ivr.bad{border-color:#EFD3CF;background:var(--red-bg)}
+.msg.you{background:var(--ink);color:#fff;border-bottom-right-radius:4px;align-self:flex-end;font-family:var(--mono);font-size:13px}
+.msg.you small{display:block;font-size:9.5px;opacity:.6;letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px}
+.sys{align-self:center;font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.06em;padding:2px 10px}
+.holdbox{align-self:center;width:min(420px,90%);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;text-align:center}
+.holdbox .bar{height:6px;border-radius:4px;background:#EFEAE5;overflow:hidden;margin-top:10px}
+.holdbox .bar i{display:block;height:100%;width:0%;background:var(--amber);transition:width .2s linear}
+.banner{align-self:center;width:min(480px,92%);border-radius:14px;padding:16px 20px;text-align:center;font-size:14px}
+.banner.rep{background:var(--green-bg);border:1px solid #CBE5D6;color:var(--green)}
+.banner.readout{background:var(--amber-bg);border:1px solid #EEDFC2;color:#7A5A14;text-align:left}
+.banner.dead{background:var(--red-bg);border:1px solid #EFD3CF;color:var(--red)}
+.banner b{display:block;margin-bottom:4px}
+
+/* ---- input dock ---- */
+.dock{border-top:1px solid var(--line);background:var(--panel);padding:14px 20px;display:flex;gap:18px;align-items:flex-start}
+.pad{display:grid;grid-template-columns:repeat(3,52px);gap:7px}
+.pad button{height:42px;font-size:16px;font-weight:600;border-radius:10px;font-family:var(--mono)}
+.entry{flex:1;display:flex;flex-direction:column;gap:8px}
+.entry .queue{font-family:var(--mono);font-size:15px;letter-spacing:.15em;min-height:24px;border-bottom:2px solid var(--line);padding:2px 4px}
+.entry .row{display:flex;gap:8px}
+.entry input[type=text]{flex:1;font:inherit;font-size:14px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:var(--bg)}
+.entry .help{font-size:11px;color:var(--faint)}
+.dock.disabled{opacity:.45;pointer-events:none}
+
+/* ---- right: debug ---- */
+.right{border-left:1px solid var(--line);background:var(--panel);padding:18px;overflow-y:auto}
+.kv{font-size:12.5px;display:flex;justify-content:space-between;padding:7px 2px;border-bottom:1px dashed var(--line)}
+.kv b{font-family:var(--mono);font-weight:500}
+.path{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.path span{font-family:var(--mono);font-size:10.5px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 7px}
+.path span.cur{background:var(--ruby-soft);border-color:#E3C2BB;color:var(--ruby)}
+.metric{font-family:var(--mono);font-size:22px;margin:4px 0 14px}
+.dl{margin-top:18px;width:100%}
+@media(max-width:980px){.layout{grid-template-columns:1fr}.side,.right{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <svg width="18" height="18" viewBox="0 0 100 100"><path fill-rule="evenodd" fill="#9E2B25" d="M50 2C55.5 29.5 70.5 44.5 98 50C70.5 55.5 55.5 70.5 50 98C44.5 70.5 29.5 55.5 2 50C29.5 44.5 44.5 29.5 50 2ZM50 29.5C42 41.5 35.5 49.5 35.5 58A14.5 14.5 0 0 0 64.5 58C64.5 49.5 58 41.5 50 29.5Z"/></svg>
+  <h1>Voice Agent Sandbox</h1>
+  <span class="tag">fictional payers · synthetic data · no real calls</span>
+</header>
+
+<div class="layout">
+  <aside class="side">
+    <h2>Pick a payer</h2>
+    <div id="payers"></div>
+    <div class="set">
+      <h2>Simulation settings</h2>
+      <label>Mishear rate <output id="mhOut">0.12</output></label>
+      <input type="range" id="mh" min="0" max="1" step="0.01" value="0.12">
+      <label>Hold speed <output id="hsOut">fast</output></label>
+      <input type="range" id="hs" min="0" max="2" step="1" value="0">
+      <label>Seed <output id="seedOut">42</output></label>
+      <input type="range" id="seed" min="1" max="999" step="1" value="42">
+      <div class="row">
+        <button class="primary" id="dial" style="flex:1">Dial</button>
+        <button id="hangup">Hang up</button>
+      </div>
+    </div>
+    <p class="hint">Speech gets misheard; DTMF never does. That asymmetry is the whole lesson. Type digits on your keyboard for DTMF; press Enter in the speech box to speak.</p>
+  </aside>
+
+  <main class="callcol">
+    <div class="callbar">
+      <b id="payerName">No call</b><span class="num" id="payerNum"></span>
+      <span class="state idle" id="state">idle</span>
+    </div>
+    <div class="feed" id="feed"></div>
+    <div class="dock disabled" id="dock">
+      <div class="pad" id="pad"></div>
+      <div class="entry">
+        <div class="queue" id="queue">&nbsp;</div>
+        <div class="row">
+          <button id="sendDtmf">Send DTMF</button>
+          <button id="clearDtmf">Clear</button>
+        </div>
+        <div class="row">
+          <input type="text" id="speech" placeholder='Speak… e.g. "claims" or "one five zero" or "Alpha One Bravo Two"'>
+          <button id="say">Say</button>
+        </div>
+        <span class="help">DTMF builds in the strip above, then Send. Speech goes through the mishearing model.</span>
+      </div>
+    </div>
+  </main>
+
+  <aside class="right">
+    <h2>Hold time (synthetic)</h2>
+    <div class="metric" id="holdMetric">0s</div>
+    <h2>What the IVR captured</h2>
+    <div id="captured"><div class="kv"><span>nothing yet</span><b></b></div></div>
+    <h2 style="margin-top:18px">Node path</h2>
+    <div class="path" id="path"></div>
+    <button class="dl" id="dl">Download transcript</button>
+  </aside>
+</div>
+
+<script type="module">
+import { IVRCall } from "../src/ivr-engine.js";
+
+const TREES = ["coral-health", "meridian-blue", "sundial-medicare"];
+const HOLD_SCALES = [0.004, 0.02, 1];
+const HOLD_LABELS = ["fast", "slow-ish", "realistic (bring a book)"];
+const $ = (id) => document.getElementById(id);
+let call = null, tree = null, treeName = TREES[0], path = [];
+
+const trees = {};
+for (const n of TREES) trees[n] = await (await fetch(`../src/trees/${n}.json`)).json();
+
+// payer cards
+$("payers").innerHTML = TREES.map((n) => {
+  const t = trees[n];
+  return `<div class="payer" data-n="${n}"><span class="stars">${"♦".repeat(t.difficulty)}</span><b>${t.payer.replace(" (FICTIONAL)", "")}</b><span>${t.phone} · fictional</span></div>`;
+}).join("");
+document.querySelectorAll(".payer").forEach((el) => el.addEventListener("click", () => {
+  treeName = el.dataset.n;
+  document.querySelectorAll(".payer").forEach((p) => p.classList.toggle("active", p === el));
+}));
+document.querySelector(".payer").classList.add("active");
+
+// keypad
+const KEYS = ["1","2","3","4","5","6","7","8","9","*","0","#"];
+$("pad").innerHTML = KEYS.map((k) => `<button data-k="${k}">${k}</button>`).join("");
+$("pad").addEventListener("click", (e) => { if (e.target.dataset.k) queueKey(e.target.dataset.k); });
+document.addEventListener("keydown", (e) => {
+  if (document.activeElement === $("speech")) return;
+  if (KEYS.includes(e.key)) queueKey(e.key);
+  if (e.key === "Enter") sendDtmf();
+  if (e.key === "Backspace") $("queue").textContent = $("queue").textContent.trim().slice(0, -1) || " ";
+});
+function queueKey(k) {
+  const q = $("queue").textContent.trim();
+  $("queue").textContent = (q === "" ? "" : q) + k;
+}
+
+// settings
+$("mh").addEventListener("input", () => $("mhOut").textContent = $("mh").value);
+$("hs").addEventListener("input", () => $("hsOut").textContent = HOLD_LABELS[$("hs").value]);
+$("seed").addEventListener("input", () => $("seedOut").textContent = $("seed").value);
+
+$("dial").addEventListener("click", dial);
+$("hangup").addEventListener("click", () => { if (call) endUi({ kind: "ended", text: "You hung up." }); });
+$("sendDtmf").addEventListener("click", sendDtmf);
+$("clearDtmf").addEventListener("click", () => $("queue").textContent = " ");
+$("say").addEventListener("click", saySpeech);
+$("speech").addEventListener("keydown", (e) => { if (e.key === "Enter") saySpeech(); });
+$("dl").addEventListener("click", () => {
+  if (!call) return;
+  const blob = new Blob([call.transcript()], { type: "text/plain" });
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `${treeName}-transcript.txt` });
+  a.click();
+});
+
+function dial() {
+  tree = trees[treeName];
+  path = [];
+  call = new IVRCall(tree, {
+    seed: +$("seed").value,
+    holdScale: HOLD_SCALES[+$("hs").value],
+    mishearRate: +$("mh").value,
+  });
+  $("feed").innerHTML = "";
+  $("payerName").textContent = tree.payer.replace(" (FICTIONAL)", "");
+  $("payerNum").textContent = tree.phone;
+  setState("live");
+  $("dock").classList.remove("disabled");
+  sys(`dialing ${tree.phone}…`);
+  bubble("ivr", tree.greeting);
+  handle(call.start());
+}
+
+function sendDtmf() {
+  const v = $("queue").textContent.trim();
+  if (!v || !call) return;
+  $("queue").textContent = " ";
+  bubble("you", v, "DTMF");
+  handle(call.input({ type: "dtmf", value: v }));
+}
+function saySpeech() {
+  const v = $("speech").value.trim();
+  if (!v || !call) return;
+  $("speech").value = "";
+  bubble("you", v, "speech");
+  handle(call.input({ type: "speech", value: v }));
+}
+
+async function handle(ev) {
+  trackPath(ev.node);
+  refreshDebug();
+  if (ev.kind === "prompt" || ev.kind === "confirm") bubble("ivr", ev.text);
+  else if (ev.kind === "reprompt") bubble("ivr bad", ev.text);
+  else if (ev.kind === "hold") {
+    setState("hold");
+    $("dock").classList.add("disabled");
+    bubble("ivr", ev.text);
+    const box = holdBox(ev.resolveAfterMs);
+    const next = await call.waitForRep();
+    box.remove();
+    handle(next);
+    return;
+  }
+  else if (ev.kind === "rep") {
+    setState("rep");
+    $("dock").classList.add("disabled");
+    bubble("ivr", ev.text);
+    banner("rep", "WARM TRANSFER POINT", `A human rep is live after ${Math.round(call.holdTimeMs() / 1000)}s (scaled) on hold. In production the biller is bridged here with a claim screen-pop. Your agent's job ends now.`);
+  }
+  else if (ev.kind === "readout") {
+    setState("done");
+    $("dock").classList.add("disabled");
+    banner("readout", "AUTOMATED READOUT (Layer 4: capture + parse this)", ev.text);
+  }
+  else if (ev.kind === "ended") endUi(ev);
+  refreshDebug();
+}
+
+function endUi(ev) {
+  setState("done");
+  $("dock").classList.add("disabled");
+  banner("dead", "CALL ENDED", ev.text + " (Redial to try again — same seed replays the same mishearing.)");
+  refreshDebug();
+}
+
+// ---- UI helpers ----
+function bubble(cls, text, label) {
+  const d = document.createElement("div");
+  d.className = `msg ${cls}`;
+  d.innerHTML = (label ? `<small>${label}</small>` : "") + esc(text);
+  $("feed").appendChild(d); scroll();
+}
+function sys(t) { const d = document.createElement("div"); d.className = "sys"; d.textContent = t; $("feed").appendChild(d); scroll(); }
+function banner(cls, title, text) {
+  const d = document.createElement("div");
+  d.className = `banner ${cls}`;
+  d.innerHTML = `<b>${esc(title)}</b>${esc(text)}`;
+  $("feed").appendChild(d); scroll();
+}
+function holdBox(ms) {
+  const d = document.createElement("div");
+  d.className = "holdbox";
+  d.innerHTML = `<div>On hold… the bot waits so the biller doesn't.</div><div class="bar"><i></i></div>`;
+  $("feed").appendChild(d); scroll();
+  const bar = d.querySelector("i"); const t0 = Date.now();
+  const iv = setInterval(() => {
+    const p = Math.min(100, ((Date.now() - t0) / ms) * 100);
+    bar.style.width = p + "%";
+    if (p >= 100) clearInterval(iv);
+  }, 120);
+  return d;
+}
+function setState(s) { const el = $("state"); el.className = `state ${s}`; el.textContent = { live: "in IVR", hold: "on hold", rep: "rep live", done: "ended", idle: "idle" }[s]; }
+function trackPath(n) { if (n && path[path.length - 1] !== n) { path.push(n); } }
+function refreshDebug() {
+  $("holdMetric").textContent = call ? Math.round(call.holdTimeMs() / 1000) + "s" : "0s";
+  const cap = call ? Object.entries(call.captured) : [];
+  $("captured").innerHTML = cap.length
+    ? cap.map(([k, v]) => `<div class="kv"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("")
+    : `<div class="kv"><span>nothing yet</span><b></b></div>`;
+  $("path").innerHTML = path.map((p, i) => `<span class="${i === path.length - 1 ? "cur" : ""}">${esc(p)}</span>`).join("");
+}
+function scroll() { $("feed").scrollTop = $("feed").scrollHeight; }
+function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+</script>
+</body>
+</html>
