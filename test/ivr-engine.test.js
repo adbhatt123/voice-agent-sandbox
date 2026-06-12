@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { IVRCall, normalizeTokens } from "../src/ivr-engine.js";
+import { IVRCall, normalizeTokens, decodeMultitap } from "../src/ivr-engine.js";
 
 const load = (n) => JSON.parse(readFileSync(new URL(`../src/trees/${n}.json`, import.meta.url)));
 
@@ -113,4 +113,46 @@ test("transcript captures both directions", () => {
   const t = call.transcript();
   assert.ok(t.includes("IVR"));
   assert.ok(t.includes("YOU"));
+});
+
+test("decodeMultitap: letters, digits, invalid groups", () => {
+  assert.equal(decodeMultitap("222"), "C");
+  assert.equal(decodeMultitap("2222"), "2");
+  assert.equal(decodeMultitap("7w0w1w2222w3333w4444"), "P01234");
+  assert.equal(decodeMultitap("23"), null);
+  assert.equal(decodeMultitap("22222"), null);
+});
+
+test("granite-medicare: fully automated end-to-end, two claims, zero reps", () => {
+  const tree = load("granite-medicare");
+  assert.ok(!Object.values(tree.nodes).some((n) => n.kind === "rep"), "tree must have no rep node");
+  const call = new IVRCall(tree, { seed: 9, mishearRate: 0 });
+  call.start();
+  call.input({ type: "dtmf", value: "1" });
+  call.input({ type: "dtmf", value: "1234567890#" });
+  call.input({ type: "dtmf", value: "7w0w1w2222w3333w4444" });
+  call.input({ type: "dtmf", value: "123456789" });
+  let ev = call.input({ type: "dtmf", value: "06152026" });
+  assert.equal(ev.kind, "readout");
+  assert.ok(ev.followup, "readout must offer follow-up menu");
+  assert.ok(ev.text.includes("06152026"));
+  assert.equal(ev.captured.ptan, "P01234");
+  ev = call.input({ type: "dtmf", value: "1" });
+  assert.equal(ev.node, "dos");
+  ev = call.input({ type: "dtmf", value: "07012026" });
+  assert.equal(ev.kind, "readout");
+  assert.ok(ev.text.includes("07012026"));
+  ev = call.input({ type: "dtmf", value: "3" });
+  assert.equal(ev.kind, "ended");
+});
+
+test("granite-medicare: malformed multitap PTAN gets a retry, then works", () => {
+  const call = new IVRCall(load("granite-medicare"), { seed: 9, mishearRate: 0 });
+  call.start();
+  call.input({ type: "dtmf", value: "1" });
+  call.input({ type: "dtmf", value: "1234567890#" });
+  let ev = call.input({ type: "dtmf", value: "23w1" });
+  assert.equal(ev.kind, "reprompt");
+  ev = call.input({ type: "dtmf", value: "7w0w1w2222w3333w4444" });
+  assert.equal(ev.node, "tin");
 });

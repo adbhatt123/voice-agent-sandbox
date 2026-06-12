@@ -34,7 +34,7 @@ dependencies, so there is no `npm install` step.
    cd voice-agent-sandbox
    ```
 
-3. Verify your environment. Expected: 15 pass, 0 fail, 11 skipped (the
+3. Verify your environment. Expected: 18 pass, 0 fail, 13 skipped (the
    skips are the phonetic library — your deliverable):
 
    ```bash
@@ -56,7 +56,7 @@ dependencies, so there is no `npm install` step.
 6. Updates to the simulator (new trees, engine fixes) arrive as commits to
    main: `git pull origin main` and rebase your branch.
 
-Day one goal: reach a live "rep" on all three payers using only `npm run
+Day one goal: reach a live "rep" or final readout on all four payers using only `npm run
 call`. If you can't beat the tree by hand, your agent won't either.
 
 ## Why a sandbox
@@ -79,7 +79,7 @@ PROVIDED (the environment):
 | Piece | File | What it does |
 |---|---|---|
 | IVR engine | `src/ivr-engine.js` | Generic state machine that plays any tree config: menus, data capture, confirmation loops, hold, rep, readout, hangup |
-| Fictional payer trees | `src/trees/*.json` | 3 fake payers of increasing difficulty (see below). Trees are DATA, matching Layer 1 of the brief |
+| Fictional payer trees | `src/trees/*.json` | 4 fake payers of increasing difficulty (see below). Trees are DATA, matching Layer 1 of the brief |
 | Mishearing model | built into engine | Spoken digits/letters get corrupted with seeded randomness. DTMF never does. You will rediscover the brief's "prefer DTMF" rule yourself within an hour |
 | PHI-style logger | `src/phi-logger.js` | Masking logger + `scanForLeaks()`. Even synthetic IDs must be masked in logs; the habit is the point |
 | Interactive CLI | `src/cli.js` | Play the IVR by hand to learn a tree before automating it (this is your Week 1-2 "shadow the phone tree" exercise, minus the phone) |
@@ -90,10 +90,10 @@ YOU BUILD (the deliverables, per the brief):
 | Deliverable | Where | Definition of done |
 |---|---|---|
 | Phonetic/dialing library (Layer 2) | implement `src/phonetic.js` | All tests in `test/phonetic.test.js` pass (they currently skip as "pending"). Pure functions, no I/O |
-| Navigation agent (Layer 1) | your code, imports the engine | Reaches `rep` or `readout` on all 3 trees, including mishearing recovery and the confirmation loop, with zero leaked identifiers in its logs |
+| Navigation agent (Layer 1) | your code, imports the engine | Reaches `rep` or `readout` on all 4 trees, including mishearing recovery, the confirmation loop, and multi-tap letter entry, with zero leaked identifiers in its logs |
 | Hold/transfer logic (Layer 3) | your code | Detects `hold` state, "bridges" (callback) the instant `rep` fires; measure synthetic biller-seconds saved |
 
-## The three fictional payers
+## The four fictional payers
 
 All payer names, phone numbers, member IDs, and patients are FICTIONAL.
 Never put real PHI in this sandbox, including in test fixtures.
@@ -106,6 +106,16 @@ Never put real PHI in this sandbox, including in test fixtures.
    prompts, so mishearing is unavoidable: your phonetic pacing matters),
    random hold before rep, and an IVR status readout branch (Layer 4) whose
    text your agent should capture and parse.
+4. `granite-medicare.json` — FULLY AUTOMATED END-TO-END, modeled on real
+   Medicare self-service lines: no rep exists on this line at all. NPI, TIN,
+   and a PTAN entered via multi-tap letters (for C, press 2 three times,
+   pause between characters: "7w0w1w2222w3333w4444" spells P01234), then a
+   claim-status readout with a repeat/another-claim loop. THIS IS WHERE OUR
+   FIRST PRODUCTION AI AGENT IS SCOPED: end-to-end automation is only safe
+   when there is no human rep on the line (Layer 4 of the brief), and
+   Medicare's IVRs are exactly that. Your agent's goal here: authenticate,
+   read out N claims in one call, parse every readout into structured
+   status, hang up. Zero human seconds.
 
 ## Engine API (60-second tour)
 
@@ -185,5 +195,8 @@ navigation logic carry over unchanged. That is the point of the sandbox.
 1. `npm run call` until you can reach a rep on all 3 trees by hand.
 2. Implement `phonetic.js` until the test suite is green (Weeks 3-4).
 3. Write your agent against coral-health, then meridian-blue (Weeks 5-6).
-4. Beat sundial-medicare: mishearing recovery + hold + readout parse (Weeks 7-8).
+4. Beat sundial-medicare: mishearing recovery + hold + readout parse, then
+   granite-medicare end-to-end: multi-tap PTAN entry + multi-claim readout
+   parsing in a single call (Weeks 7-8). Granite is the dress rehearsal for
+   the first real deployment target.
 5. Wire your agent's logs through `phi-logger` and keep `scanForLeaks` clean.

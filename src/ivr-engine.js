@@ -106,7 +106,12 @@ export class IVRCall {
     if (node.via && !node.via.includes(inp.type)) {
       return this._ev("reprompt", node.rejectText ?? `Please use ${node.via.join(" or ")}.`);
     }
-    const heard = inp.type === "speech" ? this._mishear(inp.value) : inp.value;
+    let heard = inp.type === "speech" ? this._mishear(inp.value) : inp.value;
+    if (node.alphaDtmf && inp.type === "dtmf") {
+      const decoded = decodeMultitap(heard);
+      if (decoded === null) return this._retry(node, node.invalidText ?? "That entry is not valid.");
+      heard = decoded;
+    }
     const normalized = normalizeTokens(heard);
     if (node.pattern && !new RegExp(node.pattern).test(normalized)) {
       return this._retry(node, node.invalidText ?? "That entry is not valid.");
@@ -158,6 +163,12 @@ export class IVRCall {
     if (node.kind === "readout") {
       const text = renderTemplate(node.template, this.captured);
       this._say(text);
+      if (node.next) {
+        const nx = this.tree.nodes[node.next];
+        this.nodeId = node.next;
+        if (nx?.prompt) this._say(nx.prompt);
+        return this._ev("readout", text, { captured: { ...this.captured }, followup: nx?.prompt ?? null });
+      }
       this._ended = true;
       return this._ev("readout", text, { captured: { ...this.captured } });
     }
@@ -234,6 +245,30 @@ export function normalizeTokens(raw) {
     if (NATO[up]) return NATO[up];
     return up;
   }).join("");
+}
+
+/**
+ * Decode multi-tap DTMF letter entry (the "press 2 three times for C" rule).
+ * Characters are separated by "w" (a pause, matching telephony SDK notation).
+ * For keys with letters: 1 press = first letter ... last+1 presses = the digit
+ * itself ("2222" -> "2"). Keys 0/1/#/* take a single press and mean themselves.
+ * Returns null if any group is invalid.
+ * @param {string} value e.g. "7w0w1w2222w3333w4444" -> "P01234"
+ */
+export function decodeMultitap(value) {
+  const LETTERS = { "2": "ABC", "3": "DEF", "4": "GHI", "5": "JKL", "6": "MNO", "7": "PQRS", "8": "TUV", "9": "WXYZ" };
+  const groups = String(value).split(/w+/i).filter(Boolean);
+  let out = "";
+  for (const g of groups) {
+    const ch = g[0];
+    if (!/^([0-9#*])\1*$/.test(g)) return null;
+    const letters = LETTERS[ch];
+    if (!letters) { if (g.length !== 1) return null; out += ch; continue; }
+    if (g.length <= letters.length) out += letters[g.length - 1];
+    else if (g.length === letters.length + 1) out += ch;
+    else return null;
+  }
+  return out;
 }
 
 function renderTemplate(tpl, vars) {

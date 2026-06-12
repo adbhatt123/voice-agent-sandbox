@@ -67,7 +67,9 @@ button.primary:hover{background:#7E211C}
 /* ---- input dock ---- */
 .dock{border-top:1px solid var(--line);background:var(--panel);padding:14px 20px;display:flex;gap:18px;align-items:flex-start}
 .pad{display:grid;grid-template-columns:repeat(3,52px);gap:7px}
-.pad button{height:42px;font-size:16px;font-weight:600;border-radius:10px;font-family:var(--mono)}
+.pad button{height:46px;font-size:15px;font-weight:600;border-radius:10px;font-family:var(--mono);line-height:1.1;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.pad button small{font-size:7.5px;font-weight:400;letter-spacing:1.5px;color:var(--faint)}
+.pad button.wide{grid-column:1/-1;height:30px;font-size:11px;letter-spacing:.08em;color:var(--soft)}
 .entry{flex:1;display:flex;flex-direction:column;gap:8px}
 .entry .queue{font-family:var(--mono);font-size:15px;letter-spacing:.15em;min-height:24px;border-bottom:2px solid var(--line);padding:2px 4px}
 .entry .row{display:flex;gap:8px}
@@ -151,7 +153,7 @@ button.primary:hover{background:#7E211C}
 <script type="module">
 import { IVRCall } from "../src/ivr-engine.js";
 
-const TREES = ["coral-health", "meridian-blue", "sundial-medicare"];
+const TREES = ["coral-health", "meridian-blue", "sundial-medicare", "granite-medicare"];
 const HOLD_SCALES = [0.004, 0.02, 1];
 const HOLD_LABELS = ["fast", "slow-ish", "realistic (bring a book)"];
 const $ = (id) => document.getElementById(id);
@@ -173,11 +175,12 @@ document.querySelector(".payer").classList.add("active");
 
 // keypad
 const KEYS = ["1","2","3","4","5","6","7","8","9","*","0","#"];
-$("pad").innerHTML = KEYS.map((k) => `<button data-k="${k}">${k}</button>`).join("");
+const SUB = {"2":"ABC","3":"DEF","4":"GHI","5":"JKL","6":"MNO","7":"PQRS","8":"TUV","9":"WXYZ","0":" "};
+$("pad").innerHTML = KEYS.map((k) => `<button data-k="${k}">${k}${SUB[k] ? `<small>${SUB[k]}</small>` : ""}</button>`).join("") + `<button data-k="w" class="wide">w &middot; pause (for letter entry)</button>`;
 $("pad").addEventListener("click", (e) => { if (e.target.dataset.k) queueKey(e.target.dataset.k); });
 document.addEventListener("keydown", (e) => {
   if (document.activeElement === $("speech")) return;
-  if (KEYS.includes(e.key)) queueKey(e.key);
+  if (KEYS.includes(e.key) || e.key === "w") queueKey(e.key);
   if (e.key === "Enter") sendDtmf();
   if (e.key === "Backspace") $("queue").textContent = $("queue").textContent.trim().slice(0, -1) || " ";
 });
@@ -259,9 +262,13 @@ async function handle(ev) {
     banner("rep", "WARM TRANSFER POINT", `A human rep is live after ${Math.round(call.holdTimeMs() / 1000)}s (scaled) on hold. In production the biller is bridged here with a claim screen-pop. Your agent's job ends now.`);
   }
   else if (ev.kind === "readout") {
-    setState("done");
-    $("dock").classList.add("disabled");
     banner("readout", "AUTOMATED READOUT (Layer 4: capture + parse this)", ev.text);
+    if (ev.followup) {
+      bubble("ivr", ev.followup);
+    } else {
+      setState("done");
+      $("dock").classList.add("disabled");
+    }
   }
   else if (ev.kind === "ended") endUi(ev);
   refreshDebug();

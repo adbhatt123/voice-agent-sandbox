@@ -36,6 +36,14 @@ golden("toDtmf: strips separators, rejects anything else", () => {
   assert.throws(() => toDtmf("12!45"), RangeError);
 });
 
+golden("toDtmf: multitap letterMode (press 2 three times for C)", () => {
+  assert.equal(toDtmf("C", { letterMode: "multitap", terminator: "" }), "222");
+  assert.equal(toDtmf("AB2", { letterMode: "multitap", terminator: "" }), "2w22w2222");
+});
+golden("toDtmf: multitap round-trips a Granite Medicare PTAN", () => {
+  assert.equal(toDtmf("P01234", { letterMode: "multitap", terminator: "" }), "7w0w1w2222w3333w4444");
+});
+
 // ---- toNatoSpeech ----
 golden("toNatoSpeech: alphanumerics", () => {
   assert.equal(toNatoSpeech("A1B2"), "Alpha One Bravo Two");

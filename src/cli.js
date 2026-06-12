@@ -17,7 +17,7 @@ console.log(`(plain digits = DTMF, "s one five zero" = speech, "t" = transcript,
 let ev = call.start();
 render(ev);
 
-while (ev.kind !== "ended" && ev.kind !== "rep" && ev.kind !== "readout") {
+while (!(ev.kind === "ended" || ev.kind === "rep" || (ev.kind === "readout" && !ev.followup))) {
   if (ev.kind === "hold") {
     process.stdout.write("  [on hold");
     const tick = setInterval(() => process.stdout.write("."), 200);
@@ -46,4 +46,5 @@ rl.close();
 function render(e) {
   const tag = { prompt: "IVR", reprompt: "IVR!", confirm: "IVR?", hold: "IVR~", rep: "REP", readout: "IVR=", ended: "END" }[e.kind] ?? e.kind;
   console.log(`[${tag}] ${e.text}`);
+  if (e.followup) console.log(`[IVR] ${e.followup}`);
 }

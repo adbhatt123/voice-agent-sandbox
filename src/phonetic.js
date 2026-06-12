@@ -16,12 +16,18 @@ export class NotImplementedError extends Error {
 
 /**
  * Identifier -> DTMF keypress string.
- * Letters map to their keypad digit (A/B/C->2 ... W/X/Y/Z->9) ONLY when
- * `letterMode` is "keypad"; in "reject" mode (default) throw RangeError on
- * letters, because most payer IVRs cannot take alphanumerics via DTMF and
- * silently mis-keying them is worse than failing loudly.
+ * letterMode controls letters:
+ *  - "reject" (default): throw RangeError on letters. Most payer IVRs cannot
+ *    take alphanumerics via DTMF; silently mis-keying is worse than failing.
+ *  - "keypad": letter -> its key, one press (A/B/C->2 ... W/X/Y/Z->9).
+ *  - "multitap": phone-keypad letter entry, "for C press 2 three times".
+ *    Each character becomes the key pressed N times (N = letter position;
+ *    digits on lettered keys take letters+1 presses, so "2" -> "2222"),
+ *    characters joined with "w" (a pause, telephony SDK notation).
+ *    "P01234" -> "7w0w1w2222w3333w4444". Granite Medicare's PTAN node
+ *    accepts exactly this format; the engine's decodeMultitap() reverses it.
  * @param {string} identifier e.g. "ZZT0001234" or "061520260"
- * @param {{letterMode?:"reject"|"keypad", terminator?:string}} [opts]
+ * @param {{letterMode?:"reject"|"keypad"|"multitap", terminator?:string}} [opts]
  * @returns {string} e.g. "061520260#"
  */
 export function toDtmf(identifier, opts = {}) {
