@@ -40,7 +40,7 @@ dependencies, so there is no `npm install` step.
    cd voice-agent-sandbox
    ```
 
-3. Verify your environment. Expected: 21 pass, 0 fail, 15 skipped (the
+3. Verify your environment. Expected: 28 pass, 0 fail, 15 skipped (the
    skips are the phonetic library and the mission — your deliverables):
 
    ```bash
@@ -168,6 +168,35 @@ curl -s -X POST localhost:4321/api/calls \
 working reference client. In-process (`import { IVRCall }`) and over-HTTP
 are equivalent; the API exists so your agent's transport layer is already
 network-shaped when we swap in a real telephony vendor.
+
+## Realtime mode: the virtual dialer
+
+The turn-based API above is a chatbot: the IVR politely waits forever.
+Real calls don't. Realtime mode adds TIME and nothing else:
+
+- prompts stream in word chunks at a speaking rate (your agent parses a
+  stream, not a string)
+- silence after a prompt gets "Are you still there?", repeated silence
+  gets a hangup
+- input sent while the IVR is talking BARGES IN (DTMF cut-through)
+
+```
+POST /api/rt/calls                 { "tree": "granite-medicare", "timeScale": 1 }
+GET  /api/rt/calls/:id/events     Server-Sent Events stream
+POST /api/rt/calls/:id/input      reply arrives on the stream, not in this response
+POST /api/rt/calls/:id/hangup
+```
+
+Or in-process: `import { RealtimeCall } from "./src/realtime.js"` —
+subscribe with `onEvent`, send with `sendInput`, watch for `speech-chunk`,
+`speech-end`, `timeout`, `barge-in`, `hold`, `rep`, `ended`. `timeScale: 1`
+is realistic; tests use 0.004. `test/realtime.test.js` shows a complete
+event-driven Granite run.
+
+GRADUATION RULE: an agent that passes the Granite Run turn-based must then
+pass it in realtime mode at `timeScale: 1`. Same mission; the second pass
+proves you handle time, silence, and interruption — see
+docs/sandbox-principles.md for why those three are the whole game.
 
 ## The mission (manual first, then agentic)
 

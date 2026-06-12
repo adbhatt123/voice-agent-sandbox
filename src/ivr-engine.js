@@ -79,6 +79,21 @@ export class IVRCall {
     return this._ev("prompt", node.prompt ?? "...");
   }
 
+  /**
+   * The caller said nothing in time. Real IVRs reprompt, then hang up.
+   * Used by the realtime (virtual dialer) layer; turn-based callers never time out.
+   */
+  timeoutInput() {
+    if (this._ended) return this._ev("ended", "Call already ended.");
+    this._log.push({ t: Date.now(), dir: "caller", type: "silence", value: "(no input)" });
+    if (this.nodeId === "__confirm__") {
+      return this._retry({ prompt: "Press 1 to confirm, 2 to re-enter.", maxRetries: 2 });
+    }
+    const node = this.tree.nodes[this.nodeId];
+    if (!node || node.kind === "hold" || node.kind === "rep") return this._ev("hold", "Please continue to hold.");
+    return this._retry(node, node.timeoutText ?? ("Are you still there? " + (node.retryPrompt ?? node.prompt ?? "")));
+  }
+
   /** Resolves when the rep "answers" (only valid while in a hold node). */
   waitForRep() {
     if (this._ended) return Promise.resolve(this._ev("ended", "Call already ended."));

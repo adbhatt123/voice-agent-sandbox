@@ -8,6 +8,12 @@
 //   GET  /api/calls/:id                  { ended, captured, holdTimeMs, transcript }
 //   GET  /api/calls/:id/rep              long-poll: resolves when the rep answers (hold trees)
 // Events are exactly the engine's: prompt|reprompt|confirm|hold|rep|readout|ended.
+//
+// REALTIME "VIRTUAL DIALER" MODE (SSE; time, timeouts, and barge-in are real):
+//   POST /api/rt/calls                   { tree, seed?, timeScale?, wpm?, inputTimeoutMs?, mishearRate? }
+//   GET  /api/rt/calls/:id/events        Server-Sent Events stream (speech chunks, timeouts, etc.)
+//   POST /api/rt/calls/:id/input         barge-in capable; reply arrives on the stream
+//   POST /api/rt/calls/:id/hangup
 import { createServer } from "node:http";
 import { readFile, readdir } from "node:fs/promises";
 import { readFileSync } from "node:fs";
@@ -15,6 +21,7 @@ import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import { IVRCall } from "./ivr-engine.js";
+import { RealtimeCall } from "./realtime.js";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const MIME = {
@@ -28,6 +35,7 @@ const MIME = {
 };
 
 const calls = new Map(); // callId -> { call, tree }
+const rtCalls = new Map(); // callId -> RealtimeCall (virtual dialer mode)
 const MAX_CALLS = 200;
 
 function loadTree(name) {
@@ -71,6 +79,40 @@ async function handleApi(req, res, path) {
     calls.set(callId, { call, tree });
     const event = call.start();
     return send(res, 201, { callId, payer: tree.payer, event });
+  }
+
+  // ---- realtime (virtual dialer) mode: SSE event stream + async input ----
+  if (req.method === "POST" && path === "/api/rt/calls") {
+    const body = await readBody(req);
+    const tree = loadTree(body.tree ?? "");
+    if (!tree) return send(res, 400, { error: `unknown tree '${body.tree}'. GET /api/trees for options.` });
+    if (rtCalls.size >= MAX_CALLS) rtCalls.delete(rtCalls.keys().next().value);
+    const rc = new RealtimeCall(tree, body);
+    const callId = randomUUID();
+    rtCalls.set(callId, rc);
+    rc.start();
+    return send(res, 201, { callId, payer: tree.payer, stream: `/api/rt/calls/${callId}/events` });
+  }
+  const rtm = path.match(/^\/api\/rt\/calls\/([0-9a-f-]+)(\/events|\/input|\/hangup)?$/);
+  if (rtm) {
+    const rc = rtCalls.get(rtm[1]);
+    if (!rc) return send(res, 404, { error: "no such realtime call" });
+    if (req.method === "GET" && rtm[2] === "/events") {
+      res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache", connection: "keep-alive" });
+      const write = (ev) => res.write(`data: ${JSON.stringify(ev)}\n\n`);
+      for (const ev of rc.events) write(ev);            // replay history
+      const unsub = rc.onEvent((ev) => { write(ev); if (ev.kind === "ended") res.end(); });
+      req.on("close", unsub);
+      if (rc.events.some((e) => e.kind === "ended")) res.end();
+      return;
+    }
+    if (req.method === "POST" && rtm[2] === "/input") {
+      const body = await readBody(req);
+      if (!body.type || body.value === undefined) return send(res, 400, { error: "need { type: 'dtmf'|'speech', value }" });
+      rc.sendInput({ type: body.type, value: String(body.value) });
+      return send(res, 202, { accepted: true, note: "response arrives on the event stream, like a real call" });
+    }
+    if (req.method === "POST" && rtm[2] === "/hangup") { rc.hangup(); return send(res, 200, { ended: true }); }
   }
 
   const m = path.match(/^\/api\/calls\/([0-9a-f-]+)(\/input|\/rep)?$/);
