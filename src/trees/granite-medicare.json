@@ -71,7 +71,8 @@
       "kind": "menu",
       "prompt": "For another date of service, press 1. To repeat this status, press 2. To end this call, press 3.",
       "inputs": { "dtmf:1": "dos", "dtmf:2": "status", "dtmf:3": "goodbye" },
-      "maxRetries": 2,
+      "retryPrompt": "I did not recognize that entry. This menu accepts a single key only. To check ANOTHER date of service, first press 1, then enter the date when prompted. To repeat the last status, press 2. To end the call, press 3.",
+      "maxRetries": 3,
       "failText": "Goodbye."
     },
     "goodbye": {
