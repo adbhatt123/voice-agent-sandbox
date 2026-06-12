@@ -89,7 +89,7 @@ PROVIDED (the environment):
 | Fictional payer trees | `src/trees/*.json` | 4 fake payers of increasing difficulty (see below). Trees are DATA, matching Layer 1 of the brief |
 | Mishearing model | built into engine | Spoken digits/letters get corrupted with seeded randomness. DTMF never does. You will rediscover the brief's "prefer DTMF" rule yourself within an hour |
 | PHI-style logger | `src/phi-logger.js` | Masking logger + `scanForLeaks()`. Even synthetic IDs must be masked in logs; the habit is the point |
-| Interactive CLI | `src/cli.js` | Play the IVR by hand to learn a tree before automating it (this is your Week 1-2 "shadow the phone tree" exercise, minus the phone) |
+| Interactive CLI | `src/cli.js` | Play the IVR by hand to learn a tree before automating it (the "shadow the phone tree" exercise from the brief, minus the phone) |
 | Example agent | `src/agent-example.js` | A deliberately naive agent showing the engine API. It fails on harder trees; that's your starting line |
 
 YOU BUILD (the deliverables, per the brief):
@@ -245,7 +245,7 @@ The engine API is shaped like a call-control SDK on purpose:
 
 Recommended pattern: define a thin `CallTransport` interface in your agent
 (startCall, sendDtmf, say, onEvent). The simulator is its first
-implementation; the week 7-8 vendor prototype is the second. Your tree
+implementation; the eventual vendor prototype is the second. Your tree
 configs, phonetic library, and navigation logic should not change at all.
 
 Vendor candidates to evaluate WITH Adarsh before any real call (every one
@@ -268,13 +268,15 @@ engine's `input()`/events for a telephony vendor's call-control API and the
 mishearing model for real ASR, but your tree configs, phonetic library, and
 navigation logic carry over unchanged. That is the point of the sandbox.
 
-## Suggested order (maps to the brief's weekly roadmap)
+## Suggested order
 
-1. `npm run call` until you can reach a rep on all 3 trees by hand.
-2. Implement `phonetic.js` until the test suite is green (Weeks 3-4).
-3. Write your agent against coral-health, then meridian-blue (Weeks 5-6).
-4. Beat sundial-medicare: mishearing recovery + hold + readout parse, then
-   granite-medicare end-to-end: multi-tap PTAN entry + multi-claim readout
-   parsing in a single call (Weeks 7-8). Granite is the dress rehearsal for
-   the first real deployment target.
+The skipped tests are the to-do list; this is just the sensible sequence.
+Go as fast as the tests turn green.
+
+1. `npm run web` (or `npm run call`) until you can beat all four trees by hand.
+2. Implement `phonetic.js` until its test suite is green.
+3. Granite Run phase 1 (manual), then phase 2: `src/my-agent.js` turn-based.
+4. Phase 3: the same mission realtime — streaming, barge-in, word budget.
 5. Wire your agent's logs through `phi-logger` and keep `scanForLeaks` clean.
+6. The other trees (holds, confirmation loops, warm transfer) harden your
+   navigation for what comes after v1.

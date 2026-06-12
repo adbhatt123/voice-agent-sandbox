@@ -23,7 +23,7 @@ existing "Call Payer" flow:
 Results key to `encounterId` because in Casa every call outcome becomes an
 ENCOUNTER-scoped note, never a patient-scoped one.
 
-## Phase 1 — manual (week 1-2)
+## Phase 1 — manual
 
 1. `npm run web`, dial Granite Medicare Part B.
 2. Authenticate with the fixture's NPI, PTAN (multi-tap!), and TIN.
@@ -42,7 +42,7 @@ ENCOUNTER-scoped note, never a patient-scoped one.
 What you should notice: the readouts are free text. Your ears parsed them.
 Phase 2 is teaching software to do the same thing.
 
-## Phase 2 — agentic (weeks 5-8)
+## Phase 2 — agentic
 
 Create `src/my-agent.js` exporting:
 
@@ -87,6 +87,13 @@ For denied work items the grader also requires `parsed.icn`,
 `parsed.remarkCodes`, and `parsed.appealDeadlineDays` — all of which only
 exist in the denial-details readout (press 4). An agent that stops at the
 status readout fails the denied claim.
+
+ARCHITECTURE NOTE (read before reaching for an LLM): the realtime grader's
+clock is deliberately too fast for a model call on every turn. That is not
+an obstacle, it is the correct production shape: IVR NAVIGATION is a
+deterministic state machine (prompt pattern -> keypress, milliseconds);
+LLM-style parsing, if you want it, belongs AFTER the call, on the saved
+transcript, where latency is free. Navigate live, parse offline.
 
 Stretch goals (not graded): parse paid amount and check number from the
 spoken-word amounts; parse `missingDocumentation` into structured form;

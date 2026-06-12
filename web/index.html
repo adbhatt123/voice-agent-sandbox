@@ -127,7 +127,21 @@ button.primary:hover{background:#7E211C}
   <svg width="18" height="18" viewBox="0 0 100 100"><path fill-rule="evenodd" fill="#9E2B25" d="M50 2C55.5 29.5 70.5 44.5 98 50C70.5 55.5 55.5 70.5 50 98C44.5 70.5 29.5 55.5 2 50C29.5 44.5 44.5 29.5 50 2ZM50 29.5C42 41.5 35.5 49.5 35.5 58A14.5 14.5 0 0 0 64.5 58C64.5 49.5 58 41.5 50 29.5Z"/></svg>
   <h1>Voice Agent Sandbox</h1>
   <span class="tag">fictional payers · synthetic data · no real calls</span>
+  <div style="margin-left:auto;display:flex;gap:8px">
+    <button class="doc-btn" data-doc="/README.md">README</button>
+    <button class="doc-btn" data-doc="/missions/granite-run.md">The Mission</button>
+  </div>
 </header>
+
+<div id="docview" style="display:none;position:fixed;inset:0;z-index:60;background:rgba(36,27,28,.45)">
+  <div style="position:absolute;inset:5% 12%;background:var(--panel);border-radius:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 30px 80px rgba(36,27,28,.35)">
+    <div style="display:flex;align-items:center;padding:12px 20px;border-bottom:1px solid var(--line)">
+      <b id="docTitle" style="font-size:14px"></b>
+      <button id="docClose" style="margin-left:auto">close (esc)</button>
+    </div>
+    <pre id="docBody" style="flex:1;overflow:auto;padding:22px 26px;font-family:var(--mono);font-size:12.5px;line-height:1.6;white-space:pre-wrap;color:var(--ink)"></pre>
+  </div>
+</div>
 
 <div class="layout">
   <aside class="side">
@@ -183,7 +197,7 @@ button.primary:hover{background:#7E211C}
     <div class="fix" id="fix" style="display:none">
       <h3>Granite Run &middot; Casa work items (click values to load keypad)</h3>
       <div id="fixRows"></div>
-      <div class="note">All synthetic. PTAN loads as multi-tap automatically. Expected outcomes are your phase-1 self-check. Full spec: <a href="../missions/granite-run.md" style="color:#7A5A14">missions/granite-run.md</a>.</div>
+      <div class="note">All synthetic. PTAN loads as multi-tap automatically. Expected outcomes are your phase-1 self-check. Full spec: <a href="#" class="doc-btn" data-doc="/missions/granite-run.md" style="color:#7A5A14">missions/granite-run.md</a>.</div>
     </div>
     <h2>Hold time (synthetic)</h2>
     <div class="metric" id="holdMetric">0s</div>
@@ -230,6 +244,19 @@ document.querySelectorAll(".tab").forEach((el) => el.addEventListener("click", (
   renderPayers();
 }));
 renderPayers();
+
+// in-app doc reader (README / mission spec)
+async function openDoc(path) {
+  const r = await fetch(path);
+  $("docTitle").textContent = path.replace(/^\//, "");
+  $("docBody").textContent = r.ok ? await r.text() : `could not load ${path}`;
+  $("docview").style.display = "";
+}
+document.querySelectorAll(".doc-btn").forEach((b) => b.addEventListener("click", (e) => { e.preventDefault(); openDoc(b.dataset.doc); }));
+document.addEventListener("click", (e) => { const d = e.target.closest?.(".doc-btn"); if (d && !d.dataset.wired) {} });
+$("docClose").addEventListener("click", () => $("docview").style.display = "none");
+$("docview").addEventListener("click", (e) => { if (e.target === $("docview")) $("docview").style.display = "none"; });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("docview").style.display = "none"; });
 
 // fixture panel: the data you test against, click-to-load
 const MULTITAP = (() => {
