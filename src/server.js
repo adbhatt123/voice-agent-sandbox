@@ -18,7 +18,7 @@ import { createServer } from "node:http";
 import { readFile, readdir } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { extname, join, normalize } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { randomUUID } from "node:crypto";
 import { IVRCall } from "./ivr-engine.js";
 import { RealtimeCall } from "./realtime.js";
@@ -38,6 +38,7 @@ const MIME = {
 
 const calls = new Map(); // callId -> { call, tree }
 const rtCalls = new Map(); // callId -> RealtimeCall (virtual dialer mode)
+const agentRuns = new Map(); // callId -> { status, results?, stats?, verdict?, error? }
 const MAX_CALLS = 200;
 
 function loadTree(name) {
@@ -81,6 +82,57 @@ async function handleApi(req, res, path) {
     calls.set(callId, { call, tree });
     const event = call.start();
     return send(res, 201, { callId, payer: tree.payer, event });
+  }
+
+  // ---- run the intern's agent (src/my-agent.js) and spectate it live ----
+  if (req.method === "POST" && path === "/api/agent/run") {
+    const body = await readBody(req);
+    let mod;
+    try {
+      mod = await import(pathToFileURL(join(ROOT, "src/my-agent.js")).href + `?v=${Date.now()}`);
+    } catch (e) {
+      if (/Cannot find module|ERR_MODULE_NOT_FOUND/.test(String(e))) {
+        return send(res, 404, { error: "No src/my-agent.js yet. Open The Mission (header button) — that file is your deliverable." });
+      }
+      return send(res, 500, { error: "src/my-agent.js failed to load", detail: String(e?.message ?? e) });
+    }
+    if (typeof mod.runGraniteMissionRealtime !== "function") {
+      return send(res, 409, {
+        error: typeof mod.runGraniteMission === "function"
+          ? "Found runGraniteMission (phase 2). The web runner spectates realtime calls: export runGraniteMissionRealtime(fixture, createCall) — phase 3 of the mission."
+          : "my-agent.js must export runGraniteMissionRealtime(fixture, createCall). See The Mission.",
+      });
+    }
+    const fixture = JSON.parse(readFileSync(join(ROOT, "missions/granite-run.json"), "utf8"));
+    const tree = loadTree(fixture.tree);
+    const rc = new RealtimeCall(tree, { timeScale: body.timeScale ?? 0.06, seed: body.seed ?? 9, mishearRate: body.mishearRate ?? 0 });
+    const callId = randomUUID();
+    rtCalls.set(callId, rc);
+    const entry = { status: "running" };
+    agentRuns.set(callId, entry);
+    let made = 0;
+    const createCall = () => { made++; if (made > 1) throw new Error("one call per run (the grader enforces this too)"); return rc; };
+    (async () => {
+      try {
+        const results = await mod.runGraniteMissionRealtime(structuredClone(fixture), createCall);
+        entry.stats = rc.stats();
+        entry.results = results;
+        entry.verdict = gradeAgentRun(results, fixture, entry.stats);
+        entry.status = "done";
+      } catch (e) {
+        entry.status = "error";
+        entry.error = String(e?.message ?? e);
+      } finally {
+        if (!rc._done) rc.hangup();
+      }
+    })();
+    return send(res, 201, { callId, stream: `/api/rt/calls/${callId}/events`, result: `/api/agent/run/${callId}` });
+  }
+  const am = path.match(/^\/api\/agent\/run\/([0-9a-f-]+)$/);
+  if (am && req.method === "GET") {
+    const entry = agentRuns.get(am[1]);
+    if (!entry) return send(res, 404, { error: "no such agent run" });
+    return send(res, 200, entry);
   }
 
   // ---- realtime (virtual dialer) mode: SSE event stream + async input ----
@@ -148,6 +200,35 @@ async function handleApi(req, res, path) {
     }
   }
   return send(res, 404, { error: "unknown API route" });
+}
+
+/** Same checks as the phase-3 mission test, shaped for the UI. */
+function gradeAgentRun(results, fixture, stats) {
+  const checks = [];
+  const ok = (label, pass, note = "") => checks.push({ label, pass, note });
+  const byWi = Object.fromEntries((results ?? []).map((r) => [r.workItemId, r]));
+  for (const wi of fixture.workItems) {
+    const got = byWi[wi.id];
+    const exp = wi.expectedCallOutcome;
+    if (!got) { ok(`claim ${wi.encounter.claimNumber}`, false, "no result returned"); continue; }
+    let pass = got.encounterId === wi.encounterId
+      && got.parsed?.status === exp.status
+      && (got.parsed?.reasonCode ?? null) === exp.reasonCode
+      && got.payerContact?.callOutcome === exp.callOutcome
+      && typeof got.payerContact?.notes === "string" && got.payerContact.notes.length > 0;
+    let note = pass ? `${exp.status}${exp.reasonCode ? " " + exp.reasonCode : ""} ✓` : "status/reason/callOutcome/notes mismatch";
+    if (pass && exp.icn && got.parsed?.icn !== exp.icn) { pass = false; note = "ICN missing or wrong"; }
+    if (pass && exp.remarkCodes) {
+      const got2 = [...(got.parsed?.remarkCodes ?? [])].sort().join(",");
+      if (got2 !== [...exp.remarkCodes].sort().join(",")) { pass = false; note = "remark codes missing (press 4 for denial details)"; }
+      else if (got.parsed?.appealDeadlineDays !== exp.appealDeadlineDays) { pass = false; note = "appeal window not captured"; }
+    }
+    ok(`claim ${wi.encounter.claimNumber} (${wi.encounter.patientName})`, pass, note);
+  }
+  ok("zero silence timeouts", stats.timeouts === 0, `${stats.timeouts} timeouts`);
+  ok("barge-ins >= 2", stats.bargeIns >= 2, `${stats.bargeIns} barge-ins`);
+  ok("word budget <= 400", stats.wordsHeard <= 400, `heard ${stats.wordsHeard} words`);
+  return { pass: checks.every((c) => c.pass), checks };
 }
 
 export function startServer(port = 0) {

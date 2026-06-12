@@ -201,8 +201,14 @@ constructs the call (one per run, enforced), timeouts must be zero, and a
 word-budget makes barge-in mandatory: hearing fewer words is the score.
 Try it yourself first: the web UI has a "Realtime mode (virtual dialer)"
 toggle — prompts type out at speaking pace, a silence bar counts down, and
-sending input mid-prompt visibly cuts the IVR off. The hold-speed slider
-sets realtime pace (fast / slower / realistic). See
+sending input mid-prompt visibly cuts the IVR off. The speed slider sets
+realtime pace (fast / slower / realistic).
+
+And once `my-agent.js` exists, the web UI's "Run my agent" button executes
+it server-side against a fresh Granite call and SPECTATES it in the same
+chat panel: you watch your own agent navigate, barge in, and get graded
+(per-claim checks + word budget) the moment it hangs up. Same grader as
+`npm test`, but you can see the call happen. See
 docs/sandbox-principles.md for why time, silence, and interruption are the
 whole game.
 

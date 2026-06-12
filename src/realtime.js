@@ -109,20 +109,24 @@ export class RealtimeCall {
     this._emit({ kind: "speech-start", sourceKind: sourceEv.kind, node: sourceEv.node });
     let i = 0;
     const sendChunk = () => {
-      if (this._done || !this._speaking) return;
+      if (this._done || !this._speaking || this._epoch !== epoch) return;
       const chunk = words.slice(i, i + CHUNK);
       i += CHUNK;
       this._stats.wordsHeard += chunk.length;
       this._emit({ kind: "speech-chunk", text: chunk.join(" ") });
+      // a listener may have barged in SYNCHRONOUSLY during that emit; if so,
+      // this prompt is dead and must not schedule anything further
+      if (this._done || this._epoch !== epoch) return;
       if (i < words.length) {
         this._after(chunk.length * msPerWord, sendChunk);
       } else {
         this._after(chunk.length * msPerWord, () => {
+          if (this._done || this._epoch !== epoch) return;  // stale completion
           this._speaking = false;
           const endEv = { kind: "speech-end", sourceKind: sourceEv.kind, node: sourceEv.node, captured: sourceEv.captured };
           if (this.debug) endEv.fullText = text;
           this._emit(endEv);
-          if (this._epoch === epoch) onDone();   // input during/after this prompt voids its continuation
+          if (this._epoch === epoch) onDone();   // listener may have responded during the emit
         });
       }
     };

@@ -55,3 +55,14 @@ test("call API: rejects unknown tree and bad input", async (t) => {
   const missing = await fetch(base + "/api/calls/00000000-0000-0000-0000-000000000000");
   assert.equal(missing.status, 404);
 });
+
+test("agent runner: friendly 404 when src/my-agent.js does not exist yet", async (t) => {
+  const server = await startServer(0);
+  t.after(() => server.close());
+  const r = await fetch(`http://localhost:${server.address().port}/api/agent/run`, {
+    method: "POST", headers: { "content-type": "application/json" }, body: "{}",
+  });
+  assert.equal(r.status, 404);
+  const body = await r.json();
+  assert.ok(body.error.includes("my-agent.js"), "error must point at the deliverable");
+});

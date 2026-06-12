@@ -87,6 +87,13 @@ button.primary:hover{background:#7E211C}
 .silence .sbar i{display:block;height:100%;width:100%;background:var(--amber);transition-property:width;transition-timing-function:linear}
 .rt-toggle{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--soft);margin-top:16px;cursor:pointer}
 .rt-toggle input{accent-color:var(--ruby)}
+.verdict{align-self:center;width:min(520px,94%);background:var(--panel);border:1.5px solid var(--line-strong);border-radius:14px;padding:16px 20px}
+.verdict h4{font-size:13px;margin-bottom:10px}
+.verdict .vk{display:flex;gap:9px;align-items:baseline;font-size:12.5px;padding:4px 0;border-bottom:1px dashed var(--line)}
+.verdict .vk:last-child{border-bottom:none}
+.verdict .vk .mark{font-family:var(--mono);font-weight:700}
+.verdict .vk .mark.ok{color:var(--green)} .verdict .vk .mark.no{color:var(--red)}
+.verdict .vk .note{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--faint)}
 .sys{align-self:center;font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.06em;padding:2px 10px}
 .holdbox{align-self:center;width:min(420px,90%);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;text-align:center}
 .holdbox .bar{height:6px;border-radius:4px;background:#EFEAE5;overflow:hidden;margin-top:10px}
@@ -165,6 +172,9 @@ button.primary:hover{background:#7E211C}
       <div class="row">
         <button class="primary" id="dial" style="flex:1">Dial</button>
         <button id="hangup">Hang up</button>
+      </div>
+      <div class="row">
+        <button id="runAgent" style="flex:1" title="Executes src/my-agent.js (phase 3 contract) against a fresh Granite call and streams the call here so you can watch it work. Graded on arrival.">&#9654; Run my agent (spectate + grade)</button>
       </div>
     </div>
     <p class="hint">Speech gets misheard; DTMF never does. That asymmetry is the whole lesson. Type digits on your keyboard for DTMF; press Enter in the speech box to speak.</p>
@@ -257,6 +267,69 @@ document.addEventListener("click", (e) => { const d = e.target.closest?.(".doc-b
 $("docClose").addEventListener("click", () => $("docview").style.display = "none");
 $("docview").addEventListener("click", (e) => { if (e.target === $("docview")) $("docview").style.display = "none"; });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("docview").style.display = "none"; });
+
+// run the intern's agent server-side, spectate the call, show the verdict
+$("runAgent").addEventListener("click", runAgent);
+async function runAgent() {
+  const live = (rt && !rt._done) || (call && !call._ended);
+  if (live && !confirm("A call is in progress. Abandon it and run the agent?")) return;
+  if (rt) { rt.hangup(); rt = null; }
+  call = null; path = [];
+  const TS = [0.06, 0.3, 1][+$("hs").value];
+  const r = await fetch("/api/agent/run", {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ timeScale: TS, mishearRate: +$("mh").value, seed: +$("seed").value }),
+  });
+  const created = await r.json();
+  $("feed").innerHTML = "";
+  if (!r.ok) {
+    setState("idle");
+    banner("dead", "AGENT NOT RUNNABLE", created.error ?? "unknown error");
+    return;
+  }
+  tree = trees["granite-medicare"];
+  $("payerName").textContent = "AGENT RUN · " + tree.payer.replace(" (FICTIONAL)", "");
+  $("payerNum").textContent = tree.phone;
+  setState("live");
+  $("dock").classList.add("disabled");   // spectator: the agent is the caller
+  sys(`your agent is dialing (×${TS})… you are watching, not driving`);
+  const timeoutMs = 6000 * TS;
+  const es = new EventSource(created.stream);
+  es.onmessage = async (msg) => {
+    const e = JSON.parse(msg.data);
+    clearSilence();
+    if (e.kind === "speech-start") {
+      trackPath(e.node);
+      curBubble = document.createElement("div");
+      curBubble.className = "msg ivr streaming" + (e.sourceKind === "reprompt" ? " bad" : "");
+      $("feed").appendChild(curBubble); scroll();
+    }
+    else if (e.kind === "speech-chunk") { if (curBubble) { curBubble.textContent += (curBubble.textContent ? " " : "") + e.text; scroll(); } }
+    else if (e.kind === "speech-end") { if (curBubble) curBubble.classList.remove("streaming"); curBubble = null; startSilence(timeoutMs); }
+    else if (e.kind === "barge-in") { if (curBubble) { curBubble.classList.remove("streaming"); curBubble = null; } sys("barge-in: agent cut the prompt"); }
+    else if (e.kind === "timeout") sys("(silence) agent let it time out");
+    else if (e.kind === "ended") {
+      es.close(); clearSilence(); setState("done");
+      for (let i = 0; i < 40; i++) {
+        const run = await (await fetch(created.result)).json();
+        if (run.status === "running") { await new Promise((z) => setTimeout(z, 250)); continue; }
+        if (run.status === "error") { banner("dead", "AGENT CRASHED", run.error); return; }
+        renderVerdict(run); return;
+      }
+      banner("dead", "AGENT RUN", "timed out waiting for the result");
+    }
+  };
+  es.onerror = () => { /* stream closes on ended; ignore */ };
+}
+function renderVerdict(run) {
+  const v = run.verdict, s = run.stats;
+  const rows = v.checks.map((c) =>
+    `<div class="vk"><span class="mark ${c.pass ? "ok" : "no"}">${c.pass ? "PASS" : "FAIL"}</span><span>${esc(c.label)}</span><span class="note">${esc(c.note)}</span></div>`).join("");
+  const d = document.createElement("div");
+  d.className = "verdict";
+  d.innerHTML = `<h4>${v.pass ? "AGENT RUN: ALL CHECKS PASS" : "AGENT RUN: FAILING CHECKS"} &middot; ${s.wordsHeard}w heard, ${s.bargeIns} barge-ins, ${s.timeouts} timeouts</h4>${rows}`;
+  $("feed").appendChild(d); scroll();
+}
 
 // fixture panel: the data you test against, click-to-load
 const MULTITAP = (() => {

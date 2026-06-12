@@ -158,3 +158,20 @@ test("realtime: stats reward barge-in (fewer words heard)", async () => {
   assert.ok(eager.wordsHeard < patient.wordsHeard, "barging in must reduce words heard");
   assert.equal(eager.bargeIns, 1);
 });
+
+test("realtime: synchronous barge-in from inside a chunk listener cannot stall the call", async () => {
+  const rc = new RealtimeCall(load("granite-medicare"), STRICT);
+  const evs = recorder(rc);
+  // barge in the instant we see each prompt's identifying chunk (re-entrant)
+  rc.onEvent((e) => {
+    if (e.kind !== "speech-chunk") return;
+    if (/press 1 or/.test(e.text)) rc.sendInput({ type: "dtmf", value: "1" });
+    else if (/provider N P/.test(e.text)) rc.sendInput({ type: "dtmf", value: "1234567890#" });
+  });
+  rc.start();
+  const end = await waitFor(rc, "speech-end", (e) => e.node === "ptan");
+  assert.ok(end, "must reach the PTAN prompt cleanly");
+  const nodes = evs.filter((e) => e.kind === "speech-end").map((e) => e.node);
+  assert.ok(!nodes.includes("root") && !nodes.includes("npi"), "barged-in prompts must NOT emit stale speech-ends");
+  rc.hangup();
+});
