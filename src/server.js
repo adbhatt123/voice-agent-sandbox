@@ -216,7 +216,7 @@ function gradeAgentRun(results, fixture, stats) {
       && (got.parsed?.reasonCode ?? null) === exp.reasonCode
       && got.payerContact?.callOutcome === exp.callOutcome
       && typeof got.payerContact?.notes === "string" && got.payerContact.notes.length > 0;
-    let note = pass ? `${exp.status}${exp.reasonCode ? " " + exp.reasonCode : ""} ✓` : "status/reason/callOutcome/notes mismatch";
+    let note = pass ? `${exp.status}${exp.reasonCode ? " " + exp.reasonCode : ""}` : "status/reason/callOutcome/notes mismatch";
     if (pass && exp.icn && got.parsed?.icn !== exp.icn) { pass = false; note = "ICN missing or wrong"; }
     if (pass && exp.remarkCodes) {
       const got2 = [...(got.parsed?.remarkCodes ?? [])].sort().join(",");

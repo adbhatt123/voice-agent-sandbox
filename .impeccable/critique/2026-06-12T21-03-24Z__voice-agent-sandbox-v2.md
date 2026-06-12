@@ -26,7 +26,7 @@ note: Claude following the impeccable critique format; the impeccable package is
 
 ## Anti-Patterns Verdict
 
-**Deterministic scan:** 0 side-stripes, 0 gray-on-color, 0 emoji in UI (one aria-hidden ♦ difficulty glyph; one ✓ inside a server code comment, never rendered).
+**Deterministic scan:** 0 side-stripes, 0 gray-on-color, 0 emoji in UI (one aria-hidden ♦ difficulty glyph; a ✓ glyph WAS rendered in verdict-card notes — removed in this pass; the PASS mark already carries the meaning).
 
 **Does this look AI-generated?** Less than before. The interaction model (spectate-your-own-agent, silence bars, barge-in markers) is purpose-built and has no template ancestor. The one growing architectural tell: web/index.html is now ~590 lines of single-file UI. Fine for a teaching sandbox; first refactor if this ever grows another tab.
 
