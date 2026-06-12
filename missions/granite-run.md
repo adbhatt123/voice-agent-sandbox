@@ -92,6 +92,28 @@ Stretch goals (not graded): parse paid amount and check number from the
 spoken-word amounts; parse `missingDocumentation` into structured form;
 survive `mishearRate > 0` with retries.
 
+## Phase 3 — realtime (the graduation pass)
+
+Same mission, but through `RealtimeCall` (the virtual dialer): prompts
+stream in chunks at speaking pace, `fullText` does not exist (assemble the
+chunks), silence times out, and waiting politely for every prompt blows the
+word budget. Export:
+
+```js
+export async function runGraniteMissionRealtime(fixture, createCall) {
+  const call = createCall();   // the GRADER constructs the call: one per run, enforced
+  // subscribe with call.onEvent, act on streamed chunks, barge in when you
+  // already know the menu, never sit silent into a timeout.
+  return results;              // same shape as phase 2
+}
+```
+
+Graded automatically: one call (enforced), zero timeouts, at least 2
+barge-ins, and `wordsHeard <= 400` (the listen-to-everything baseline is
+486; the readouts you genuinely need are ~300 of them). The budget is the
+point: an agent that waits for speech-end on every prompt is a chatbot
+with a phone number.
+
 ## Why this mission is the v1 product
 
 A biller spends real minutes per claim doing exactly this run. On a line

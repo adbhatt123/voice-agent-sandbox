@@ -6,7 +6,8 @@ import { RealtimeCall } from "../src/realtime.js";
 import { startServer } from "../src/server.js";
 
 const load = (n) => JSON.parse(readFileSync(new URL(`../src/trees/${n}.json`, import.meta.url)));
-const FAST = { timeScale: 0.004, seed: 9, mishearRate: 0 };
+const FAST = { timeScale: 0.004, seed: 9, mishearRate: 0, debug: true };
+const STRICT = { timeScale: 0.004, seed: 9, mishearRate: 0 };
 
 function recorder(rc) {
   const evs = [];
@@ -123,4 +124,37 @@ test("realtime over SSE: stream replays history and delivers live events", async
   assert.ok(kinds.includes("speech-chunk"));
   assert.ok(kinds.filter((k) => k === "speech-end").length >= 2, "stream must deliver the post-input prompt too");
   await fetch(`${base}/api/rt/calls/${created.callId}/hangup`, { method: "POST" });
+});
+
+test("realtime: fullText is withheld by default — chunks are the only source", async () => {
+  const rc = new RealtimeCall(load("granite-medicare"), STRICT);
+  const evs = recorder(rc);
+  rc.start();
+  const end = await waitFor(rc, "speech-end");
+  assert.equal(end.fullText, undefined, "no fullText without debug: assemble the chunks");
+  const assembled = evs.filter((e) => e.kind === "speech-chunk").map((e) => e.text).join(" ");
+  assert.ok(assembled.includes("claim status"), "chunks must reconstruct the prompt");
+  rc.hangup();
+});
+
+test("realtime: stats reward barge-in (fewer words heard)", async () => {
+  const run = async (bargeIn) => {
+    const rc = new RealtimeCall(load("granite-medicare"), STRICT);
+    rc.start();
+    if (bargeIn) {
+      await waitFor(rc, "speech-chunk");
+      rc.sendInput({ type: "dtmf", value: "1" });
+    } else {
+      await waitFor(rc, "speech-end");
+      rc.sendInput({ type: "dtmf", value: "1" });
+    }
+    await waitFor(rc, "speech-end", (e) => e.node === "npi");
+    const s = rc.stats();
+    rc.hangup();
+    return s;
+  };
+  const patient = await run(false);
+  const eager = await run(true);
+  assert.ok(eager.wordsHeard < patient.wordsHeard, "barging in must reduce words heard");
+  assert.equal(eager.bargeIns, 1);
 });

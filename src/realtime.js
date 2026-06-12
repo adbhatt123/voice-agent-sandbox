@@ -16,6 +16,9 @@
  *
  * Options:
  *   timeScale       1 = realistic; 0.02 makes tests fast (default 1)
+ *   debug           true exposes fullText on speech-end. OFF BY DEFAULT on
+ *                   purpose: your agent must assemble meaning from chunks,
+ *                   like real streaming ASR. Don't build against debug.
  *   wpm             IVR speaking rate, words per minute (default 165)
  *   inputTimeoutMs  silence allowed after a prompt ends (default 6000, scaled)
  *   ...plus all IVRCall options (seed, mishearRate, holdScale)
@@ -31,6 +34,8 @@ export class RealtimeCall {
     this.timeScale = opts.timeScale ?? 1;
     this.wpm = opts.wpm ?? 165;
     this.inputTimeoutMs = opts.inputTimeoutMs ?? 6000;
+    this.debug = !!opts.debug;
+    this._stats = { wordsHeard: 0, bargeIns: 0, timeouts: 0, startedAt: Date.now() };
     this.call = new IVRCall(tree, { ...opts, holdScale: (opts.holdScale ?? 1) * this.timeScale });
     this.listeners = [];
     this.events = [];          // full history, for replay/SSE catch-up
@@ -59,6 +64,7 @@ export class RealtimeCall {
     this._epoch++;
     if (this._speaking) {
       this._cancelSpeech();
+      this._stats.bargeIns++;
       this._emit({ kind: "barge-in", interrupted: true });
     }
     this._clearTimers();
@@ -67,6 +73,9 @@ export class RealtimeCall {
   }
 
   hangup() { this._finish({ kind: "ended", text: "Caller hung up." }); }
+
+  /** Efficiency metrics: a streaming agent hears fewer words (barge-in). */
+  stats() { return { ...this._stats, durationMs: Date.now() - this._stats.startedAt }; }
 
   // ---------- internals ----------
 
@@ -103,13 +112,16 @@ export class RealtimeCall {
       if (this._done || !this._speaking) return;
       const chunk = words.slice(i, i + CHUNK);
       i += CHUNK;
+      this._stats.wordsHeard += chunk.length;
       this._emit({ kind: "speech-chunk", text: chunk.join(" ") });
       if (i < words.length) {
         this._after(chunk.length * msPerWord, sendChunk);
       } else {
         this._after(chunk.length * msPerWord, () => {
           this._speaking = false;
-          this._emit({ kind: "speech-end", sourceKind: sourceEv.kind, node: sourceEv.node, fullText: text, captured: sourceEv.captured });
+          const endEv = { kind: "speech-end", sourceKind: sourceEv.kind, node: sourceEv.node, captured: sourceEv.captured };
+          if (this.debug) endEv.fullText = text;
+          this._emit(endEv);
           if (this._epoch === epoch) onDone();   // input during/after this prompt voids its continuation
         });
       }
@@ -120,6 +132,7 @@ export class RealtimeCall {
   _armTimeout() {
     this._after(this.inputTimeoutMs * this.timeScale, () => {
       const ev = this.call.timeoutInput();
+      this._stats.timeouts++;
       this._emit({ kind: "timeout", text: "(silence)" });
       this._speakEvent(ev);
     });

@@ -77,3 +77,41 @@ test("mission: no hardcoding — unseen DOS must come back not_found / Other", a
   assert.equal(results.length, 1);
   gradeResult(results[0], fx.workItems[0]);
 });
+
+// ---- Phase 3: the same mission, but time is real (virtual dialer) ----
+// Skips until src/my-agent.js exports runGraniteMissionRealtime(fixture, createCall).
+// The TEST owns call creation, so one-call-per-run and word-budget are
+// enforced, not honor system. fullText is off: chunks are all you get.
+import { RealtimeCall } from "../src/realtime.js";
+
+const WORD_BUDGET = 400; // listen-everything baseline is 486; readouts alone are ~300.
+                         // Staying under budget requires barge-in on navigation
+                         // prompts while still hearing readouts in full.
+
+test("mission: Granite Run in REALTIME (streaming, barge-in, word budget)", async (t) => {
+  if (!existsSync(fileURLToPath(agentPath))) {
+    return t.skip("pending: create src/my-agent.js (see missions/granite-run.md)");
+  }
+  const mod = await import(agentPath);
+  if (typeof mod.runGraniteMissionRealtime !== "function") {
+    return t.skip("pending: export runGraniteMissionRealtime(fixture, createCall) for phase 3");
+  }
+  const tree = JSON.parse(readFileSync(new URL("../src/trees/granite-medicare.json", import.meta.url)));
+  const made = [];
+  const createCall = () => {
+    const rc = new RealtimeCall(tree, { timeScale: 0.004, seed: 9, mishearRate: 0 });
+    made.push(rc);
+    return rc;
+  };
+  const results = await mod.runGraniteMissionRealtime(structuredClone(fixture), createCall);
+
+  assert.equal(made.length, 1, "ONE call per run — enforced here, not honor system");
+  const stats = made[0].stats();
+  assert.equal(stats.timeouts, 0, "a streaming agent never sits silent into a timeout");
+  assert.ok(stats.wordsHeard <= WORD_BUDGET,
+    `heard ${stats.wordsHeard} words; budget is ${WORD_BUDGET}. Waiting for every prompt to finish is a chatbot habit — barge in once you know the menu.`);
+  assert.ok(stats.bargeIns >= 2, "the budget is only reachable with real barge-ins");
+
+  const byWi = Object.fromEntries(results.map((r) => [r.workItemId, r]));
+  for (const wi of fixture.workItems) gradeResult(byWi[wi.id], wi);
+});

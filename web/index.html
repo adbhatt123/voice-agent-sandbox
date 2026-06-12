@@ -80,6 +80,13 @@ button.primary:hover{background:#7E211C}
 .msg.ivr.bad::before{content:"input not recognized";display:block;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin-bottom:4px}
 .msg.you{background:var(--ink);color:#fff;border-bottom-right-radius:4px;align-self:flex-end;font-family:var(--mono);font-size:13px}
 .msg.you small{display:block;font-size:9.5px;opacity:.6;letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px}
+.msg.ivr.streaming::after{content:"▋";color:var(--ruby);animation:blink 1s steps(1) infinite;margin-left:2px}
+@keyframes blink{50%{opacity:0}}
+.silence{align-self:flex-start;width:min(300px,70%);background:var(--panel);border:1px dashed var(--line-strong);border-radius:10px;padding:7px 12px;font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.08em}
+.silence .sbar{height:4px;border-radius:3px;background:#EFEAE5;overflow:hidden;margin-top:5px}
+.silence .sbar i{display:block;height:100%;width:100%;background:var(--amber);transition-property:width;transition-timing-function:linear}
+.rt-toggle{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--soft);margin-top:16px;cursor:pointer}
+.rt-toggle input{accent-color:var(--ruby)}
 .sys{align-self:center;font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.06em;padding:2px 10px}
 .holdbox{align-self:center;width:min(420px,90%);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;text-align:center}
 .holdbox .bar{height:6px;border-radius:4px;background:#EFEAE5;overflow:hidden;margin-top:10px}
@@ -138,6 +145,9 @@ button.primary:hover{background:#7E211C}
       <input type="range" id="hs" min="0" max="2" step="1" value="0">
       <label title="Same seed = identical mishearing every run. Change it to get a different 'caller luck'.">Seed <output id="seedOut">42</output></label>
       <input type="range" id="seed" min="1" max="999" step="1" value="42">
+      <label class="rt-toggle" title="Prompts stream at speaking pace, silence times out, input mid-prompt barges in. This is what the agent must handle.">
+        <input type="checkbox" id="rtMode"> Realtime mode (virtual dialer)
+      </label>
       <div class="row">
         <button class="primary" id="dial" style="flex:1">Dial</button>
         <button id="hangup">Hang up</button>
@@ -187,12 +197,13 @@ button.primary:hover{background:#7E211C}
 
 <script type="module">
 import { IVRCall } from "../src/ivr-engine.js";
+import { RealtimeCall } from "../src/realtime.js";
 
 const TREES = ["coral-health", "meridian-blue", "sundial-medicare", "granite-medicare"];
 const HOLD_SCALES = [0.004, 0.02, 1];
 const HOLD_LABELS = ["fast", "slow-ish", "realistic (bring a book)"];
 const $ = (id) => document.getElementById(id);
-let call = null, tree = null, treeName = TREES[0], path = [];
+let call = null, rt = null, tree = null, treeName = TREES[0], path = [];
 
 const trees = {};
 for (const n of TREES) trees[n] = await (await fetch(`../src/trees/${n}.json`)).json();
@@ -276,7 +287,7 @@ $("hs").addEventListener("input", () => $("hsOut").textContent = HOLD_LABELS[$("
 $("seed").addEventListener("input", () => $("seedOut").textContent = $("seed").value);
 
 $("dial").addEventListener("click", dial);
-$("hangup").addEventListener("click", () => { if (call) endUi({ kind: "ended", text: "You hung up." }); });
+$("hangup").addEventListener("click", () => { if (rt) { rt.hangup(); } else if (call) endUi({ kind: "ended", text: "You hung up." }); });
 $("sendDtmf").addEventListener("click", sendDtmf);
 $("clearDtmf").addEventListener("click", () => $("queue").textContent = " ");
 $("say").addEventListener("click", saySpeech);
@@ -289,7 +300,11 @@ $("dl").addEventListener("click", () => {
 });
 
 function dial() {
-  if (call && !call._ended && !confirm("A call is in progress. Hang up and redial?")) return;
+  const live = (rt && !rt._done) || (call && !call._ended);
+  if (live && !confirm("A call is in progress. Hang up and redial?")) return;
+  if (rt) { rt.hangup(); rt = null; }
+  if ($("rtMode").checked) return rtDial();
+  rt = null;
   tree = trees[treeName];
   path = [];
   call = new IVRCall(tree, {
@@ -309,17 +324,84 @@ function dial() {
 
 function sendDtmf() {
   const v = $("queue").textContent.trim();
-  if (!v || !call) return;
+  if (!v) return;
+  if (rt) { $("queue").textContent = " "; bubble("you", v, "DTMF"); rt.sendInput({ type: "dtmf", value: v }); return; }
+  if (!call) return;
   $("queue").textContent = " ";
   bubble("you", v, "DTMF");
   handle(call.input({ type: "dtmf", value: v }));
 }
 function saySpeech() {
   const v = $("speech").value.trim();
-  if (!v || !call) return;
+  if (!v) return;
+  if (rt) { $("speech").value = ""; bubble("you", v, "speech"); rt.sendInput({ type: "speech", value: v }); return; }
+  if (!call) return;
   $("speech").value = "";
   bubble("you", v, "speech");
   handle(call.input({ type: "speech", value: v }));
+}
+
+// ---- realtime (virtual dialer) rendering ----
+let curBubble = null, silenceEl = null;
+function rtDial() {
+  tree = trees[treeName];
+  call = null;
+  path = [];
+  const TS = [0.06, 0.3, 1][+$("hs").value];
+  rt = new RealtimeCall(tree, { seed: +$("seed").value, mishearRate: +$("mh").value, timeScale: TS });
+  $("feed").innerHTML = "";
+  $("payerName").textContent = tree.payer.replace(" (FICTIONAL)", "");
+  $("payerNum").textContent = tree.phone;
+  setState("live");
+  $("dock").classList.remove("disabled");
+  sys(`dialing ${tree.phone}… (REALTIME ×${TS}: it talks at speaking pace, silence times out, you can barge in)`);
+  const timeoutMs = rt.inputTimeoutMs * TS;
+  rt.onEvent((e) => {
+    clearSilence();
+    if (e.kind === "speech-start") {
+      trackPath(e.node); refreshRtDebug();
+      curBubble = document.createElement("div");
+      curBubble.className = "msg ivr streaming" + (e.sourceKind === "reprompt" ? " bad" : "");
+      $("feed").appendChild(curBubble); scroll();
+    }
+    else if (e.kind === "speech-chunk") {
+      if (curBubble) { curBubble.textContent += (curBubble.textContent ? " " : "") + e.text; scroll(); }
+    }
+    else if (e.kind === "speech-end") {
+      if (curBubble) curBubble.classList.remove("streaming");
+      curBubble = null;
+      refreshRtDebug();
+      startSilence(timeoutMs);
+    }
+    else if (e.kind === "barge-in") { if (curBubble) { curBubble.classList.remove("streaming"); curBubble = null; } sys("barge-in: prompt interrupted"); }
+    else if (e.kind === "timeout") sys("(silence) input timeout");
+    else if (e.kind === "hold") { setState("hold"); bubble("ivr", e.text); }
+    else if (e.kind === "rep") { setState("rep"); bubble("ivr", e.text); banner("rep", "WARM TRANSFER POINT", `Rep live. Stats: heard ${rt.stats().wordsHeard} words, ${rt.stats().bargeIns} barge-ins.`); }
+    else if (e.kind === "ended") {
+      setState("done"); $("dock").classList.add("disabled");
+      const s = rt.stats();
+      banner("dead", "CALL ENDED", `${e.text} — heard ${s.wordsHeard} words, ${s.bargeIns} barge-ins, ${s.timeouts} timeouts. Fewer words heard = better streaming agent.`);
+    }
+  });
+  rt.start();
+}
+function startSilence(ms) {
+  silenceEl = document.createElement("div");
+  silenceEl.className = "silence";
+  silenceEl.innerHTML = `your turn — silence hangs up<div class="sbar"><i></i></div>`;
+  $("feed").appendChild(silenceEl); scroll();
+  const bar = silenceEl.querySelector("i");
+  requestAnimationFrame(() => { bar.style.transitionDuration = ms + "ms"; bar.style.width = "0%"; });
+}
+function clearSilence() { if (silenceEl) { silenceEl.remove(); silenceEl = null; } }
+function refreshRtDebug() {
+  if (!rt) return;
+  $("holdMetric").textContent = Math.round(rt.stats().wordsHeard) + "w";
+  const cap = Object.entries(rt.call.captured);
+  $("captured").innerHTML = cap.length
+    ? cap.map(([k, v]) => `<div class="kv"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("")
+    : `<div class="kv"><span>nothing yet</span><b></b></div>`;
+  $("path").innerHTML = path.map((p, i) => `<span class="${i === path.length - 1 ? "cur" : ""}">${esc(p)}</span>`).join("");
 }
 
 async function handle(ev) {

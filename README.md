@@ -40,8 +40,9 @@ dependencies, so there is no `npm install` step.
    cd voice-agent-sandbox
    ```
 
-3. Verify your environment. Expected: 28 pass, 0 fail, 15 skipped (the
-   skips are the phonetic library and the mission — your deliverables):
+3. Verify your environment. Expected: 30 pass, 0 fail, 16 skipped (the
+   skips are the phonetic library and the three mission phases — your
+   deliverables):
 
    ```bash
    npm test
@@ -194,9 +195,16 @@ is realistic; tests use 0.004. `test/realtime.test.js` shows a complete
 event-driven Granite run.
 
 GRADUATION RULE: an agent that passes the Granite Run turn-based must then
-pass it in realtime mode at `timeScale: 1`. Same mission; the second pass
-proves you handle time, silence, and interruption — see
-docs/sandbox-principles.md for why those three are the whole game.
+pass it in realtime (mission phase 3: `runGraniteMissionRealtime`). Same
+mission, but `fullText` is withheld (assemble the chunks), the grader
+constructs the call (one per run, enforced), timeouts must be zero, and a
+word-budget makes barge-in mandatory: hearing fewer words is the score.
+Try it yourself first: the web UI has a "Realtime mode (virtual dialer)"
+toggle — prompts type out at speaking pace, a silence bar counts down, and
+sending input mid-prompt visibly cuts the IVR off. The hold-speed slider
+sets realtime pace (fast / slower / realistic). See
+docs/sandbox-principles.md for why time, silence, and interruption are the
+whole game.
 
 ## The mission (manual first, then agentic)
 
