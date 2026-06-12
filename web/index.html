@@ -135,7 +135,7 @@ button.primary:hover{background:#7E211C}
       <input type="range" id="mh" min="0" max="1" step="0.01" value="0.12">
       <label>Hold speed <output id="hsOut">fast</output></label>
       <input type="range" id="hs" min="0" max="2" step="1" value="0">
-      <label>Seed <output id="seedOut">42</output></label>
+      <label title="Same seed = identical mishearing every run. Change it to get a different 'caller luck'.">Seed <output id="seedOut">42</output></label>
       <input type="range" id="seed" min="1" max="999" step="1" value="42">
       <div class="row">
         <button class="primary" id="dial" style="flex:1">Dial</button>
@@ -172,7 +172,7 @@ button.primary:hover{background:#7E211C}
     <div class="fix" id="fix" style="display:none">
       <h3>Granite Run &middot; Casa work items (click values to load keypad)</h3>
       <div id="fixRows"></div>
-      <div class="note">All synthetic. PTAN loads as multi-tap automatically. Expected outcomes are your phase-1 self-check (missions/granite-run.md).</div>
+      <div class="note">All synthetic. PTAN loads as multi-tap automatically. Expected outcomes are your phase-1 self-check. Full spec: <a href="../missions/granite-run.md" style="color:#7A5A14">missions/granite-run.md</a>.</div>
     </div>
     <h2>Hold time (synthetic)</h2>
     <div class="metric" id="holdMetric">0s</div>
@@ -202,7 +202,7 @@ function renderPayers() {
   const names = TREES.filter((n) => (tab === "full") === !!trees[n].endToEnd);
   $("payers").innerHTML = names.map((n) => {
     const t = trees[n];
-    return `<div class="payer" data-n="${n}"><span class="stars">${"♦".repeat(t.difficulty)}</span><b>${t.payer.replace(" (FICTIONAL)", "")}</b><span>${t.phone} · fictional</span></div>`;
+    return `<div class="payer" data-n="${n}"><span class="stars" aria-hidden="true" title="difficulty ${t.difficulty}/4">${"♦".repeat(t.difficulty)}</span><b>${t.payer.replace(" (FICTIONAL)", "")}</b><span>${t.phone} · fictional</span></div>`;
   }).join("");
   document.querySelectorAll(".payer").forEach((el) => el.addEventListener("click", () => {
     treeName = el.dataset.n;
@@ -288,6 +288,7 @@ $("dl").addEventListener("click", () => {
 });
 
 function dial() {
+  if (call && !call._ended && !confirm("A call is in progress. Hang up and redial?")) return;
   tree = trees[treeName];
   path = [];
   call = new IVRCall(tree, {
