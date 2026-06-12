@@ -1,21 +1,59 @@
 {
   "mission": "granite-run",
-  "description": "Retrieve claim status for all claims below in ONE call to Granite Medicare (fictional). This is the v1 production scenario: fully automated, no human.",
+  "schema": "casa.workItem.v1 — field names mirror the Casa AR workbench (ArEncounter / WorkItem). Data is 100% synthetic; ids are fake cuids. Portability is the point: in production the agent receives exactly this shape from the workbench and writes results back as ENCOUNTER-scoped notes.",
   "tree": "granite-medicare",
   "provider": {
+    "name": "Sundance Infusion Center (FICTIONAL)",
     "npi": "1234567890",
     "ptan": "P01234",
-    "tin": "123456789",
-    "NOTE": "All synthetic. PTAN must be entered via multi-tap DTMF."
+    "tin": "123456789"
   },
-  "claims": [
-    { "dos": "06152026" },
-    { "dos": "07012026" },
-    { "dos": "08012026" }
+  "workItems": [
+    {
+      "workItemId": "wi_fake_gr001",
+      "encounterId": "cmfake01granite0615aaaa01",
+      "claimNumber": "886901",
+      "patient": { "name": "R. Calloway", "dobMasked": "**/**/1958" },
+      "payer": { "name": "Granite Medicare Part B (FICTIONAL)", "planType": "Medicare B" },
+      "drug": { "name": "Infliximab", "jCode": "J1745", "units": 40 },
+      "dos": "2026-06-15",
+      "dosDtmf": "06152026",
+      "billed": 14820.0,
+      "classification": "no_response",
+      "nextAction": "payer_call_status",
+      "expectedCallOutcome": { "status": "finalized", "reasonCode": null }
+    },
+    {
+      "workItemId": "wi_fake_gr002",
+      "encounterId": "cmfake02granite0701bbbb02",
+      "claimNumber": "886944",
+      "patient": { "name": "T. Ibarra", "dobMasked": "**/**/1947" },
+      "payer": { "name": "Granite Medicare Part B (FICTIONAL)", "planType": "Medicare B" },
+      "drug": { "name": "Ocrelizumab", "jCode": "J2350", "units": 600 },
+      "dos": "2026-07-01",
+      "dosDtmf": "07012026",
+      "billed": 31250.0,
+      "classification": "denial",
+      "nextAction": "payer_call_status",
+      "expectedCallOutcome": { "status": "denied", "reasonCode": "CO-16" }
+    },
+    {
+      "workItemId": "wi_fake_gr003",
+      "encounterId": "cmfake03granite0801cccc03",
+      "claimNumber": "887012",
+      "patient": { "name": "L. Fontaine", "dobMasked": "**/**/1963" },
+      "payer": { "name": "Granite Medicare Part B (FICTIONAL)", "planType": "Medicare B" },
+      "drug": { "name": "IVIG", "jCode": "J1569", "units": 30 },
+      "dos": "2026-08-01",
+      "dosDtmf": "08012026",
+      "billed": 22480.0,
+      "classification": "no_response",
+      "nextAction": "payer_call_status",
+      "expectedCallOutcome": { "status": "not_found", "reasonCode": null }
+    }
   ],
-  "expected": [
-    { "dos": "06152026", "status": "finalized", "reasonCode": null },
-    { "dos": "07012026", "status": "denied", "reasonCode": "CO-16" },
-    { "dos": "08012026", "status": "not_found", "reasonCode": null }
-  ]
+  "resultContract": {
+    "shape": [{ "encounterId": "string", "dos": "YYYY-MM-DD", "status": "finalized|denied|not_found", "reasonCode": "string|null", "raw": "verbatim readout text (optional)" }],
+    "writeback": "in Casa these become encounter-scoped notes + status updates on the work item, never patient-scoped"
+  }
 }

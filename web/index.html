@@ -54,6 +54,11 @@ button.primary:hover{background:#7E211C}
 .fix .exp.bad{background:var(--red-bg);color:var(--red)}
 .fix .exp.none{background:#EFEAE5;color:var(--soft)}
 .fix .note{font-size:10.5px;color:#8A7440;margin-top:8px;line-height:1.45}
+.fix .wi{border:1px solid #F0E6CF;background:#FFFDF7;border-radius:9px;padding:8px 10px;margin:8px 0}
+.fix .wi .who{display:flex;justify-content:space-between;font-size:12px;font-weight:600}
+.fix .wi .who span{font-family:var(--mono);font-weight:400;color:var(--faint);font-size:10.5px}
+.fix .wi .meta{font-size:10.5px;color:var(--soft);font-family:var(--mono);margin:2px 0 4px}
+.fix .cls{font-size:9.5px;font-family:var(--mono);padding:1px 6px;border-radius:100px;background:#EFEAE5;color:var(--soft);margin-left:5px}
 
 /* ---- center: the call ---- */
 .callcol{display:flex;flex-direction:column;min-width:0;min-height:0}
@@ -163,7 +168,7 @@ button.primary:hover{background:#7E211C}
 
   <aside class="right">
     <div class="fix" id="fix" style="display:none">
-      <h3>Granite Run test data (click to load keypad)</h3>
+      <h3>Granite Run &middot; Casa work items (click values to load keypad)</h3>
       <div id="fixRows"></div>
       <div class="note">All synthetic. PTAN loads as multi-tap automatically. Expected outcomes are your phase-1 self-check (missions/granite-run.md).</div>
     </div>
@@ -227,17 +232,19 @@ try {
   const expChip = (e) => e.status === "finalized" ? `<span class="exp ok">paid</span>`
     : e.status === "denied" ? `<span class="exp bad">${e.reasonCode}</span>`
     : `<span class="exp none">not found</span>`;
-  const rows = [
+  const prov = [
     ["NPI", fx.provider.npi, fx.provider.npi + "#"],
     ["PTAN " + fx.provider.ptan, MULTITAP(fx.provider.ptan), MULTITAP(fx.provider.ptan)],
     ["TIN", fx.provider.tin, fx.provider.tin],
-    ...fx.claims.map((c, i) => {
-      const e = fx.expected.find((x) => x.dos === c.dos);
-      return ["DOS " + (i + 1) + (e ? expChip(e) : ""), c.dos, c.dos];
-    }),
-  ];
-  $("fixRows").innerHTML = rows.map(([k, shown, load]) =>
+  ].map(([k, shown, load]) =>
     `<div class="kv"><span>${k}</span><b data-load="${load}" title="click to load into keypad">${shown}</b></div>`).join("");
+  const items = fx.workItems.map((wi) => `
+    <div class="wi">
+      <div class="who">${wi.patient.name}<span>${wi.claimNumber} &middot; ${wi.workItemId}</span></div>
+      <div class="meta">${wi.drug.name} &middot; ${wi.drug.jCode} &times; ${wi.drug.units} &middot; $${wi.billed.toLocaleString()}<span class="cls">${wi.classification}</span></div>
+      <div class="kv"><span>DOS ${wi.dos}${expChip(wi.expectedCallOutcome)}</span><b data-load="${wi.dosDtmf}" title="click to load into keypad">${wi.dosDtmf}</b></div>
+    </div>`).join("");
+  $("fixRows").innerHTML = prov + items;
   $("fixRows").addEventListener("click", (e) => {
     const v = e.target.dataset?.load;
     if (v) { $("queue").textContent = v; e.target.style.color = "var(--ruby)"; }
