@@ -40,7 +40,7 @@ dependencies, so there is no `npm install` step.
    cd voice-agent-sandbox
    ```
 
-3. Verify your environment. Expected: 30 pass, 0 fail, 16 skipped (the
+3. Verify your environment. Expected: 32 pass, 0 fail, 16 skipped (the
    skips are the phonetic library and the three mission phases — your
    deliverables):
 
@@ -63,8 +63,10 @@ dependencies, so there is no `npm install` step.
 6. Updates to the simulator (new trees, engine fixes) arrive as commits to
    main: `git pull origin main` and rebase your branch.
 
-Day one goal: reach a live "rep" or final readout on all four payers using only `npm run
-call`. If you can't beat the tree by hand, your agent won't either.
+Day one goal: reach a live "rep" or final readout on all four payers by
+hand (`npm run web`, or `npm run call -- granite-medicare` to pick a payer
+in the terminal). If you can't beat the tree by hand, your agent won't
+either.
 
 ## Why a sandbox
 
@@ -117,7 +119,8 @@ Never put real PHI in this sandbox, including in test fixtures.
 4. `granite-medicare.json` — FULLY AUTOMATED END-TO-END, modeled on real
    Medicare self-service lines: no rep exists on this line at all. NPI, TIN,
    and a PTAN entered via multi-tap letters (for C, press 2 three times,
-   pause between characters: "7w0w1w2222w3333w4444" spells P01234), then a
+   pause between characters: "7w0w1w2222w3333w4444" spells P01234 — digits
+   on lettered keys take letters+1 presses, so 2 is four presses), then a
    claim-status readout with a repeat/another-claim loop. THIS IS WHERE OUR
    FIRST PRODUCTION AI AGENT IS SCOPED: end-to-end automation is only safe
    when there is no human rep on the line (Layer 4 of the brief), and

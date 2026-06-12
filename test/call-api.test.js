@@ -3,6 +3,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { startServer } from "../src/server.js";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 test("call API: end-to-end Granite run over HTTP with variant readouts", async (t) => {
   const server = await startServer(0);
@@ -57,6 +59,9 @@ test("call API: rejects unknown tree and bad input", async (t) => {
 });
 
 test("agent runner: friendly 404 when src/my-agent.js does not exist yet", async (t) => {
+  if (existsSync(fileURLToPath(new URL("../src/my-agent.js", import.meta.url)))) {
+    return t.skip("my-agent.js exists; the 404 path no longer applies (this is success)");
+  }
   const server = await startServer(0);
   t.after(() => server.close());
   const r = await fetch(`http://localhost:${server.address().port}/api/agent/run`, {

@@ -450,7 +450,7 @@ function rtDial() {
   const TS = [0.06, 0.3, 1][+$("hs").value];
   // Humans type slower than agents act: pin the silence window to 12 REAL
   // seconds regardless of playback speed (graders use the scaled clock).
-  rt = new RealtimeCall(tree, { seed: +$("seed").value, mishearRate: +$("mh").value, timeScale: TS, inputTimeoutMs: 12000 / TS });
+  rt = new RealtimeCall(tree, { seed: +$("seed").value, mishearRate: +$("mh").value, timeScale: TS, inputTimeoutMs: 12000 / TS, debug: true });
   $("feed").innerHTML = "";
   $("payerName").textContent = tree.payer.replace(" (FICTIONAL)", "");
   $("payerNum").textContent = tree.phone;

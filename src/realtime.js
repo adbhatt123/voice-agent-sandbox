@@ -106,7 +106,9 @@ export class RealtimeCall {
     const msPerWord = (60000 / this.wpm) * this.timeScale;
     const CHUNK = 4;
     this._speaking = true;
-    this._emit({ kind: "speech-start", sourceKind: sourceEv.kind, node: sourceEv.node });
+    const startEv = { kind: "speech-start", sourceKind: sourceEv.kind };
+    if (this.debug) startEv.node = sourceEv.node;     // real ASR gives you words, not node ids
+    this._emit(startEv);
     let i = 0;
     const sendChunk = () => {
       if (this._done || !this._speaking || this._epoch !== epoch) return;
@@ -123,8 +125,8 @@ export class RealtimeCall {
         this._after(chunk.length * msPerWord, () => {
           if (this._done || this._epoch !== epoch) return;  // stale completion
           this._speaking = false;
-          const endEv = { kind: "speech-end", sourceKind: sourceEv.kind, node: sourceEv.node, captured: sourceEv.captured };
-          if (this.debug) endEv.fullText = text;
+          const endEv = { kind: "speech-end", sourceKind: sourceEv.kind };
+          if (this.debug) { endEv.fullText = text; endEv.node = sourceEv.node; endEv.captured = sourceEv.captured; }
           this._emit(endEv);
           if (this._epoch === epoch) onDone();   // listener may have responded during the emit
         });

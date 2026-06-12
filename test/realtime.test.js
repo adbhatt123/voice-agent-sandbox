@@ -132,6 +132,8 @@ test("realtime: fullText is withheld by default — chunks are the only source",
   rc.start();
   const end = await waitFor(rc, "speech-end");
   assert.equal(end.fullText, undefined, "no fullText without debug: assemble the chunks");
+  assert.equal(end.node, undefined, "no node ids without debug: real ASR gives you words");
+  assert.equal(end.captured, undefined, "no captured leak without debug");
   const assembled = evs.filter((e) => e.kind === "speech-chunk").map((e) => e.text).join(" ");
   assert.ok(assembled.includes("claim status"), "chunks must reconstruct the prompt");
   rc.hangup();
@@ -139,7 +141,7 @@ test("realtime: fullText is withheld by default — chunks are the only source",
 
 test("realtime: stats reward barge-in (fewer words heard)", async () => {
   const run = async (bargeIn) => {
-    const rc = new RealtimeCall(load("granite-medicare"), STRICT);
+    const rc = new RealtimeCall(load("granite-medicare"), FAST);
     rc.start();
     if (bargeIn) {
       await waitFor(rc, "speech-chunk");
@@ -160,7 +162,7 @@ test("realtime: stats reward barge-in (fewer words heard)", async () => {
 });
 
 test("realtime: synchronous barge-in from inside a chunk listener cannot stall the call", async () => {
-  const rc = new RealtimeCall(load("granite-medicare"), STRICT);
+  const rc = new RealtimeCall(load("granite-medicare"), FAST);
   const evs = recorder(rc);
   // barge in the instant we see each prompt's identifying chunk (re-entrant)
   rc.onEvent((e) => {

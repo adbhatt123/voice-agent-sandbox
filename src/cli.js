@@ -1,5 +1,6 @@
 // Interactive caller: YOU navigate the fake payer IVR.
-// Usage: node src/cli.js [coral-health|meridian-blue|sundial-medicare]
+// Usage: node src/cli.js [coral-health|meridian-blue|sundial-medicare|granite-medicare]
+//   (via npm: npm run call -- granite-medicare)
 // Inputs:  plain digits = DTMF  |  s <words> = speech  |  t = transcript  |  q = quit
 import { createInterface } from "node:readline/promises";
 import { readFileSync } from "node:fs";

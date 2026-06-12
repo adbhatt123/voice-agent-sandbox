@@ -33,7 +33,7 @@ test("DTMF input is never corrupted", () => {
   call.input({ type: "dtmf", value: "2" });
   const ev = call.input({ type: "dtmf", value: "987654321#" });
   assert.equal(ev.kind, "readout");
-  assert.equal(ev.captured.memberId, "987654321#");
+  assert.equal(ev.captured.memberId, "987654321", "terminator # must be stripped from captures");
 });
 
 test("speech is corrupted at mishearRate=1: IVR hears a DIFFERENT value", () => {

@@ -131,7 +131,7 @@ export class IVRCall {
     if (node.pattern && !new RegExp(node.pattern).test(normalized)) {
       return this._retry(node, node.invalidText ?? "That entry is not valid.");
     }
-    this.captured[node.capture] = normalized;
+    this.captured[node.capture] = normalized.replace(/#$/, "");  // never store/speak the terminator
     this.retries = 0;
     if (node.confirm) {
       this._pendingConfirm = { capture: node.capture, returnTo: this.nodeId, next: node.next };
