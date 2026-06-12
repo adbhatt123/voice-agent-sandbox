@@ -23,7 +23,7 @@ dependencies, so there is no `npm install` step.
 2. Clone it:
 
    ```bash
-   git clone <REPO-URL-FROM-ADARSH> voice-agent-sandbox
+   git clone https://github.com/adbhatt123/voice-agent-sandbox.git voice-agent-sandbox
    cd voice-agent-sandbox
    ```
 
