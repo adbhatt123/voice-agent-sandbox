@@ -123,7 +123,7 @@ async function handleApi(req, res, path) {
         entry.status = "error";
         entry.error = String(e?.message ?? e);
       } finally {
-        if (!rc._done) rc.hangup();
+        if (!rc.isEnded()) rc.hangup();
       }
     })();
     return send(res, 201, { callId, stream: `/api/rt/calls/${callId}/events`, result: `/api/agent/run/${callId}` });
@@ -183,7 +183,7 @@ async function handleApi(req, res, path) {
     }
     if (req.method === "GET" && m[2] === "/rep") {
       const node = call.tree.nodes[call.nodeId];
-      if (!call._ended && node?.kind !== "hold") {
+      if (!call.isEnded() && node?.kind !== "hold") {
         return send(res, 409, { error: "call is not on hold; /rep only resolves from a hold state" });
       }
       const event = await call.waitForRep();
@@ -191,7 +191,7 @@ async function handleApi(req, res, path) {
     }
     if (req.method === "GET" && !m[2]) {
       return send(res, 200, {
-        ended: call._ended,
+        ended: call.isEnded(),
         node: call.nodeId,
         captured: call.captured,
         holdTimeMs: call.holdTimeMs(),

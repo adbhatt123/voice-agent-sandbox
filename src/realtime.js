@@ -77,6 +77,9 @@ export class RealtimeCall {
   /** Efficiency metrics: a streaming agent hears fewer words (barge-in). */
   stats() { return { ...this._stats, durationMs: Date.now() - this._stats.startedAt }; }
 
+  /** Public call-state accessor; do not reach for _done. */
+  isEnded() { return this._done; }
+
   // ---------- internals ----------
 
   _speakEvent(ev) {

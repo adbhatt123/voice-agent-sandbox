@@ -7,25 +7,25 @@
 <style>
 :root{
   --bg:#F7F5F2; --panel:#FFFFFF; --line:#E7E0DA; --ink:#241B1C; --soft:#6E6260;
-  --faint:#9C918E; --ruby:#9E2B25; --ruby-soft:#F6E9E6; --green:#1E7F4F; --green-bg:#E9F4EE;
+  --faint:#756763; --ruby:#9E2B25; --ruby-soft:#F6E9E6; --green:#1E7F4F; --green-bg:#E9F4EE;
   --amber:#A66A12; --amber-bg:#FBF1DD; --red:#B3261E; --red-bg:#F9E9E7; --mono:ui-monospace,Menlo,monospace;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);height:100vh;display:flex;flex-direction:column;overflow:hidden}
 header{display:flex;align-items:center;gap:12px;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel)}
 header h1{font-size:16px;font-weight:600}
-header .tag{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.08em;text-transform:uppercase}
+header .tag{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.04em}
 .layout{display:grid;grid-template-columns:300px 1fr 348px;flex:1;min-height:0}
 @media(max-width:1280px){.layout{grid-template-columns:280px 1fr 320px}}
 
 /* ---- left: payers + settings ---- */
 .side{border-right:1px solid var(--line);background:var(--panel);padding:18px;overflow-y:auto}
-.side h2,.right h2{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
+.side h2,.right h2{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
 .payer{border:1.5px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:9px;cursor:pointer;transition:border-color .15s,background .15s}
 .payer:hover{border-color:#CDB8B0}
 .payer.active{border-color:var(--ruby);background:var(--ruby-soft)}
 .payer b{font-size:13.5px;display:block}
-.payer span{font-size:11.5px;color:var(--soft)}
+.payer span{font-size:12px;color:var(--soft)}
 .payer .stars{float:right;color:var(--ruby);font-size:11px;letter-spacing:2px}
 .set{margin-top:20px}
 .set label{display:flex;justify-content:space-between;font-size:12px;color:var(--soft);margin:12px 0 4px}
@@ -36,17 +36,17 @@ button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(-
 button:hover{background:#F4EEE9}
 button.primary{background:var(--ruby);border-color:var(--ruby);color:#fff;font-weight:600}
 button.primary:hover{background:#7E211C}
-.hint{font-size:11.5px;color:var(--faint);margin-top:16px;line-height:1.5}
+.hint{font-size:12px;color:var(--faint);margin-top:16px;line-height:1.5}
 
 /* ---- tabs ---- */
 .tabs{display:flex;gap:6px;margin-bottom:14px}
-.tab{flex:1;padding:9px 6px;font-size:12px;font-weight:600;border-radius:9px;border:1.5px solid var(--line);background:var(--bg);color:var(--soft)}
+.tab{flex:1;padding:9px 10px;font-size:12px;font-weight:600;border-radius:9px;border:1.5px solid var(--line);background:var(--bg);color:var(--soft)}
 .tab.active{border-color:var(--ruby);background:var(--ruby-soft);color:var(--ruby)}
-.tab small{display:block;font-weight:400;font-size:9.5px;color:var(--faint);margin-top:1px}
+.tab small{display:block;font-weight:400;font-size:10.5px;color:var(--faint);margin-top:1px}
 
 /* ---- fixture panel ---- */
 .fix{border:1.5px solid #EEDFC2;background:#FDF8EE;border-radius:12px;padding:12px 13px;margin-bottom:18px}
-.fix h3{font-size:11px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;color:#7A5A14;margin-bottom:8px}
+.fix h3{font-size:11.5px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;color:#7A5A14;margin-bottom:8px}
 .fix .kv{border-color:#F0E6CF;gap:12px}
 .fix .kv b{word-break:break-all;text-align:right;letter-spacing:.04em}
 .fix .kv b{cursor:pointer;border-bottom:1px dashed #C9A86A}
@@ -55,11 +55,11 @@ button.primary:hover{background:#7E211C}
 .fix .exp.ok{background:var(--green-bg);color:var(--green)}
 .fix .exp.bad{background:var(--red-bg);color:var(--red)}
 .fix .exp.none{background:#EFEAE5;color:var(--soft)}
-.fix .note{font-size:10.5px;color:#8A7440;margin-top:8px;line-height:1.45}
+.fix .note{font-size:11.5px;color:#6B5826;margin-top:8px;line-height:1.45}
 .fix .wi{border:1px solid #F0E6CF;background:#FFFDF7;border-radius:9px;padding:8px 10px;margin:8px 0}
 .fix .wi .who{display:flex;justify-content:space-between;font-size:12px;font-weight:600}
-.fix .wi .who span{font-family:var(--mono);font-weight:400;color:var(--faint);font-size:10.5px}
-.fix .wi .meta{font-size:10.5px;color:var(--soft);font-family:var(--mono);margin:2px 0 4px}
+.fix .wi .who span{font-family:var(--mono);font-weight:400;color:var(--faint);font-size:11.5px}
+.fix .wi .meta{font-size:11.5px;color:var(--soft);font-family:var(--mono);margin:2px 0 4px}
 .fix .cls{font-size:9.5px;font-family:var(--mono);padding:1px 6px;border-radius:100px;background:#EFEAE5;color:var(--soft);margin-left:5px}
 
 /* ---- center: the call ---- */
@@ -77,14 +77,29 @@ button.primary:hover{background:#7E211C}
 @keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
 .msg.ivr{background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:4px;align-self:flex-start}
 .msg.ivr.bad{border-color:#EFD3CF;background:var(--red-bg)}
-.msg.ivr.bad::before{content:"input not recognized";display:block;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin-bottom:4px}
+.msg.ivr.bad::before{content:"input not recognized";display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin-bottom:4px}
+.msg.ivr.to{border-color:#F0DFC0;background:var(--amber-bg)}
+.msg.ivr.to::before{content:"no input received";display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);margin-bottom:4px}
+button.armed{background:var(--ruby);border-color:var(--ruby);color:#fff;font-weight:600}
+.knob-note{font-size:11.5px;color:var(--soft);margin-top:10px;line-height:1.5}
+.idle{align-self:center;margin:auto;max-width:430px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px 28px}
+.idle h3{font-size:15px;margin-bottom:12px}
+.idle ol{margin:0 0 12px 18px;font-size:14px;color:var(--soft);display:flex;flex-direction:column;gap:7px}
+.idle p{font-size:12.5px;color:var(--faint)}
+.docbody{flex:1;overflow:auto;padding:22px 28px;font-size:14px;line-height:1.65;color:var(--ink)}
+.docbody h1{font-size:20px;margin:18px 0 10px}.docbody h2{font-size:16px;margin:18px 0 8px}.docbody h3{font-size:14px;margin:14px 0 6px}
+.docbody pre{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:12px 14px;font-family:var(--mono);font-size:12px;overflow-x:auto;margin:10px 0;white-space:pre}
+.docbody code{font-family:var(--mono);font-size:12.5px;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+.docbody pre code{border:none;background:none;padding:0}
+.docbody ul{margin:8px 0 8px 20px;display:flex;flex-direction:column;gap:4px}
+.docbody p{margin:8px 0}
 .msg.you{background:var(--ink);color:#fff;border-bottom-right-radius:4px;align-self:flex-end;font-family:var(--mono);font-size:13px}
 .msg.you small{display:block;font-size:9.5px;opacity:.6;letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px}
 .msg.ivr.streaming::after{content:"▋";color:var(--ruby);animation:blink 1s steps(1) infinite;margin-left:2px}
 @keyframes blink{50%{opacity:0}}
 .silence{align-self:flex-start;width:min(300px,70%);background:var(--panel);border:1px dashed var(--line-strong);border-radius:10px;padding:7px 12px;font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.08em}
 .silence .sbar{height:4px;border-radius:3px;background:#EFEAE5;overflow:hidden;margin-top:5px}
-.silence .sbar i{display:block;height:100%;width:100%;background:var(--amber);transition-property:width;transition-timing-function:linear}
+.silence .sbar i{display:block;height:100%;width:100%;background:var(--amber);transform-origin:left;transform:scaleX(1);transition-property:transform;transition-timing-function:linear}
 .rt-toggle{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--soft);margin-top:16px;cursor:pointer}
 .rt-toggle input{accent-color:var(--ruby)}
 .verdict{align-self:center;width:min(520px,94%);background:var(--panel);border:1.5px solid var(--line-strong);border-radius:14px;padding:16px 20px}
@@ -97,7 +112,7 @@ button.primary:hover{background:#7E211C}
 .sys{align-self:center;font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.06em;padding:2px 10px}
 .holdbox{align-self:center;width:min(420px,90%);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;text-align:center}
 .holdbox .bar{height:6px;border-radius:4px;background:#EFEAE5;overflow:hidden;margin-top:10px}
-.holdbox .bar i{display:block;height:100%;width:0%;background:var(--amber);transition:width .2s linear}
+.holdbox .bar i{display:block;height:100%;width:100%;background:var(--amber);transform-origin:left;transform:scaleX(0);transition:transform .2s linear}
 .banner{align-self:center;width:min(480px,92%);border-radius:14px;padding:16px 20px;text-align:center;font-size:14px}
 .banner.rep{background:var(--green-bg);border:1px solid #CBE5D6;color:var(--green)}
 .banner.readout{background:var(--amber-bg);border:1px solid #EEDFC2;color:#7A5A14;text-align:left}
@@ -109,12 +124,12 @@ button.primary:hover{background:#7E211C}
 .pad{display:grid;grid-template-columns:repeat(3,52px);gap:7px}
 .pad button{height:46px;font-size:15px;font-weight:600;border-radius:10px;font-family:var(--mono);line-height:1.1;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .pad button small{font-size:7.5px;font-weight:400;letter-spacing:1.5px;color:var(--faint)}
-.pad button.wide{grid-column:1/-1;height:30px;font-size:11px;letter-spacing:.08em;color:var(--soft)}
+.pad button.wide{grid-column:1/-1;height:30px;font-size:11.5px;color:var(--soft)}
 .entry{flex:1;display:flex;flex-direction:column;gap:8px}
 .entry .queue{font-family:var(--mono);font-size:15px;letter-spacing:.08em;min-height:24px;border-bottom:2px solid var(--line);padding:2px 4px;overflow-x:auto;white-space:nowrap;scrollbar-width:thin}
 .entry .row{display:flex;gap:8px}
 .entry input[type=text]{flex:1;font:inherit;font-size:14px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:var(--bg)}
-.entry .help{font-size:11px;color:var(--faint)}
+.entry .help{font-size:12px;color:var(--faint)}
 .dock.disabled{opacity:.45;pointer-events:none}
 
 /* ---- right: debug ---- */
@@ -126,7 +141,13 @@ button.primary:hover{background:#7E211C}
 .path span.cur{background:var(--ruby-soft);border-color:#E3C2BB;color:var(--ruby)}
 .metric{font-family:var(--mono);font-size:22px;margin:4px 0 14px}
 .dl{margin-top:18px;width:100%}
-@media(max-width:980px){.layout{grid-template-columns:1fr}.side,.right{display:none}}
+@media(max-width:980px){
+  body{height:auto;overflow:auto}
+  .layout{display:flex;flex-direction:column}
+  .side{border-right:none;border-bottom:1px solid var(--line)}
+  .callcol{min-height:72vh}
+  .right{border-left:none;border-top:1px solid var(--line)}
+}
 </style>
 </head>
 <body>
@@ -146,15 +167,15 @@ button.primary:hover{background:#7E211C}
       <b id="docTitle" style="font-size:14px"></b>
       <button id="docClose" style="margin-left:auto">close (esc)</button>
     </div>
-    <pre id="docBody" style="flex:1;overflow:auto;padding:22px 26px;font-family:var(--mono);font-size:12.5px;line-height:1.6;white-space:pre-wrap;color:var(--ink)"></pre>
+    <div id="docBody" class="docbody"></div>
   </div>
 </div>
 
 <div class="layout">
   <aside class="side">
     <div class="tabs">
-      <button class="tab active" data-tab="full">1 · Full IVR<small>end-to-end · v1 scope</small></button>
-      <button class="tab" data-tab="semi">2 · Semi IVR<small>rep + warm transfer · later</small></button>
+      <button class="tab active" data-tab="full">Full IVR<small>end-to-end · v1 scope</small></button>
+      <button class="tab" data-tab="semi">Semi IVR<small>rep + warm transfer · later</small></button>
     </div>
     <h2>Pick a payer</h2>
     <div id="payers"></div>
@@ -163,9 +184,10 @@ button.primary:hover{background:#7E211C}
       <label>Mishear rate <output id="mhOut">0.12</output></label>
       <input type="range" id="mh" min="0" max="1" step="0.01" value="0.12">
       <label title="Speeds up holds and realtime speech. Your 12s human input window stays fixed.">Speed (hold &amp; realtime) <output id="hsOut">fast</output></label>
-      <input type="range" id="hs" min="0" max="2" step="1" value="0">
-      <label title="Same seed = identical mishearing every run. Change it to get a different 'caller luck'.">Seed <output id="seedOut">42</output></label>
-      <input type="range" id="seed" min="1" max="999" step="1" value="42">
+      <input type="range" id="hs" min="0" max="2" step="1" value="2">
+      <label>Seed</label>
+      <input type="number" id="seed" min="1" max="999" value="42" style="width:100%;font:inherit;font-family:var(--mono);font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--bg)">
+      <p class="knob-note">Same seed replays the same mishearing. Speed scales playback; your 12 second reply window stays fixed.</p>
       <label class="rt-toggle" title="Prompts stream at speaking pace, silence times out, input mid-prompt barges in. This is what the agent must handle.">
         <input type="checkbox" id="rtMode"> Realtime mode (virtual dialer)
       </label>
@@ -185,7 +207,17 @@ button.primary:hover{background:#7E211C}
       <b id="payerName">No call</b><span class="num" id="payerNum"></span>
       <span class="state idle" id="state">idle</span>
     </div>
-    <div class="feed" id="feed" aria-live="polite"></div>
+    <div class="feed" id="feed" aria-live="polite">
+      <div class="idle">
+        <h3>Beat the payer by hand first</h3>
+        <ol>
+          <li>Pick a payer on the left (Granite Medicare is the v1 target)</li>
+          <li>Dial, then answer with the keypad or the speech box</li>
+          <li>Click values in the right panel to load them onto the keypad</li>
+        </ol>
+        <p>Day one goal: reach a readout or a live rep on all four payers. If you can't beat the tree by hand, your agent won't either. Realtime mode adds speech pacing, silence timeouts, and barge-in.</p>
+      </div>
+    </div>
     <div class="dock disabled" id="dock">
       <div class="pad" id="pad"></div>
       <div class="entry">
@@ -209,7 +241,7 @@ button.primary:hover{background:#7E211C}
       <div id="fixRows"></div>
       <div class="note">All synthetic. PTAN loads as multi-tap automatically. Expected outcomes are your phase-1 self-check. Full spec: <a href="#" class="doc-btn" data-doc="/missions/granite-run.md" style="color:#7A5A14">missions/granite-run.md</a>.</div>
     </div>
-    <h2>Hold time (synthetic)</h2>
+    <h2 id="metricLabel">Hold time (synthetic)</h2>
     <div class="metric" id="holdMetric">0s</div>
     <h2>What the IVR captured</h2>
     <div id="captured"><div class="kv"><span>nothing yet</span><b></b></div></div>
@@ -224,8 +256,8 @@ import { IVRCall } from "../src/ivr-engine.js";
 import { RealtimeCall } from "../src/realtime.js";
 
 const TREES = ["coral-health", "meridian-blue", "sundial-medicare", "granite-medicare"];
-const HOLD_SCALES = [0.004, 0.02, 1];
-const HOLD_LABELS = ["fast", "slow-ish", "realistic (bring a book)"];
+const HOLD_SCALES = [1, 0.02, 0.004];
+const HOLD_LABELS = ["realistic (bring a book)", "medium", "fast"];
 const $ = (id) => document.getElementById(id);
 let call = null, rt = null, tree = null, treeName = TREES[0], path = [];
 
@@ -238,7 +270,7 @@ function renderPayers() {
   const names = TREES.filter((n) => (tab === "full") === !!trees[n].endToEnd);
   $("payers").innerHTML = names.map((n) => {
     const t = trees[n];
-    return `<div class="payer" data-n="${n}"><span class="stars" aria-hidden="true" title="difficulty ${t.difficulty}/4">${"♦".repeat(t.difficulty)}</span><b>${t.payer.replace(" (FICTIONAL)", "")}</b><span>${t.phone} · fictional</span></div>`;
+    return `<div class="payer" data-n="${n}"><span class="stars" title="difficulty">lvl ${t.difficulty}/4</span><b>${t.payer.replace(" (FICTIONAL)", "")}</b><span>${t.phone} · fictional</span></div>`;
   }).join("");
   document.querySelectorAll(".payer").forEach((el) => el.addEventListener("click", () => {
     treeName = el.dataset.n;
@@ -256,26 +288,47 @@ document.querySelectorAll(".tab").forEach((el) => el.addEventListener("click", (
 renderPayers();
 
 // in-app doc reader (README / mission spec)
+function mdLite(md) {
+  const fence = md.split(/```/);
+  return fence.map((part, i) => {
+    if (i % 2 === 1) return `<pre><code>${esc(part.replace(/^\w*\n/, ""))}</code></pre>`;
+    const lines = part.split("\n");
+    let out = "", inUl = false, inTbl = false;
+    const flush = () => { if (inUl) { out += "</ul>"; inUl = false; } if (inTbl) { out += "</code></pre>"; inTbl = false; } };
+    for (const raw of lines) {
+      const line = esc(raw);
+      const inline = (s) => s
+        .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+        .replace(/`([^`]+)`/g, "<code>$1</code>");
+      if (/^#{1,3} /.test(raw)) { flush(); const lvl = raw.match(/^#+/)[0].length; out += `<h${lvl}>${inline(line.replace(/^#+ /, ""))}</h${lvl}>`; }
+      else if (/^\s*[-*] /.test(raw)) { if (!inUl) { flush(); out += "<ul>"; inUl = true; } out += `<li>${inline(line.replace(/^\s*[-*] /, ""))}</li>`; }
+      else if (/^\|/.test(raw)) { if (!inTbl) { flush(); out += "<pre><code>"; inTbl = true; } out += line + "\n"; }
+      else if (raw.trim() === "") { flush(); }
+      else { flush(); out += `<p>${inline(line)}</p>`; }
+    }
+    flush();
+    return out;
+  }).join("");
+}
 async function openDoc(path) {
   const r = await fetch(path);
   $("docTitle").textContent = path.replace(/^\//, "");
-  $("docBody").textContent = r.ok ? await r.text() : `could not load ${path}`;
+  $("docBody").innerHTML = r.ok ? mdLite(await r.text()) : esc(`could not load ${path}`);
   $("docview").style.display = "";
 }
 document.querySelectorAll(".doc-btn").forEach((b) => b.addEventListener("click", (e) => { e.preventDefault(); openDoc(b.dataset.doc); }));
-document.addEventListener("click", (e) => { const d = e.target.closest?.(".doc-btn"); if (d && !d.dataset.wired) {} });
 $("docClose").addEventListener("click", () => $("docview").style.display = "none");
 $("docview").addEventListener("click", (e) => { if (e.target === $("docview")) $("docview").style.display = "none"; });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("docview").style.display = "none"; });
 
 // run the intern's agent server-side, spectate the call, show the verdict
-$("runAgent").addEventListener("click", runAgent);
+$("runAgent").addEventListener("click", () => { $("runAgent").blur(); runAgent(); });
 async function runAgent() {
-  const live = (rt && !rt._done) || (call && !call._ended);
-  if (live && !confirm("A call is in progress. Abandon it and run the agent?")) return;
+  const live = (rt && !rt.isEnded()) || (call && !call.isEnded());
+  if (live && !armed($("runAgent"), "Call live: click again to run")) return;
   if (rt) { rt.hangup(); rt = null; }
   call = null; path = [];
-  const TS = [0.06, 0.3, 1][+$("hs").value];
+  const TS = [1, 0.3, 0.06][+$("hs").value];
   const r = await fetch("/api/agent/run", {
     method: "POST", headers: { "content-type": "application/json" },
     body: JSON.stringify({ timeScale: TS, mishearRate: +$("mh").value, seed: +$("seed").value }),
@@ -291,17 +344,22 @@ async function runAgent() {
   $("payerName").textContent = "AGENT RUN · " + tree.payer.replace(" (FICTIONAL)", "");
   $("payerNum").textContent = tree.phone;
   setState("live");
+  $("metricLabel").textContent = "Words heard (grading currency)";
   $("dock").classList.add("disabled");   // spectator: the agent is the caller
   sys(`your agent is dialing (×${TS})… you are watching, not driving`);
   const timeoutMs = 6000 * TS;
+  lastAgentRun = created;
+  let wasTimeout = false;
   const es = new EventSource(created.stream);
   es.onmessage = async (msg) => {
     const e = JSON.parse(msg.data);
     clearSilence();
+    if (e.kind === "timeout") wasTimeout = true;
     if (e.kind === "speech-start") {
       trackPath(e.node);
       curBubble = document.createElement("div");
-      curBubble.className = "msg ivr streaming" + (e.sourceKind === "reprompt" ? " bad" : "");
+      curBubble.className = "msg ivr streaming" + (e.sourceKind === "reprompt" ? (wasTimeout ? " to" : " bad") : "");
+      wasTimeout = false;
       $("feed").appendChild(curBubble); scroll();
     }
     else if (e.kind === "speech-chunk") { if (curBubble) { curBubble.textContent += (curBubble.textContent ? " " : "") + e.text; scroll(); } }
@@ -341,6 +399,7 @@ const MULTITAP = (() => {
   }
   return (s) => [...String(s).toUpperCase()].map((c) => m[c] ?? c).join("w");
 })();
+fetch("/src/my-agent.js", { method: "HEAD" }).then((r) => { if (r.ok) $("runAgent").classList.add("primary"); }).catch(() => {});
 try {
   const fx = await (await fetch("../missions/granite-run.json")).json();
   const expChip = (e) => e.status === "finalized" ? `<span class="exp ok">paid</span>`
@@ -373,7 +432,7 @@ $("pad").addEventListener("click", (e) => { if (e.target.dataset.k) queueKey(e.t
 document.addEventListener("keydown", (e) => {
   if (document.activeElement === $("speech")) return;
   if (KEYS.includes(e.key) || e.key === "w") queueKey(e.key);
-  if (e.key === "Enter") sendDtmf();
+  if (e.key === "Enter") { if (document.activeElement instanceof HTMLButtonElement) document.activeElement.blur(); e.preventDefault(); sendDtmf(); }
   if (e.key === "Backspace") $("queue").textContent = $("queue").textContent.trim().slice(0, -1) || " ";
 });
 function queueKey(k) {
@@ -384,24 +443,40 @@ function queueKey(k) {
 // settings
 $("mh").addEventListener("input", () => $("mhOut").textContent = $("mh").value);
 $("hs").addEventListener("input", () => $("hsOut").textContent = HOLD_LABELS[$("hs").value]);
-$("seed").addEventListener("input", () => $("seedOut").textContent = $("seed").value);
 
-$("dial").addEventListener("click", dial);
-$("hangup").addEventListener("click", () => { if (rt) { rt.hangup(); } else if (call) endUi({ kind: "ended", text: "You hung up." }); });
+let armTimer = null;
+function armed(btn, label) {
+  if (btn.dataset.armed === "1") {
+    btn.dataset.armed = ""; btn.classList.remove("armed"); btn.textContent = btn.dataset.orig; clearTimeout(armTimer);
+    return true;
+  }
+  btn.dataset.armed = "1"; btn.dataset.orig = btn.textContent; btn.classList.add("armed"); btn.textContent = label;
+  clearTimeout(armTimer);
+  armTimer = setTimeout(() => { btn.dataset.armed = ""; btn.classList.remove("armed"); btn.textContent = btn.dataset.orig; }, 3000);
+  return false;
+}
+$("dial").addEventListener("click", () => { $("dial").blur(); dial(); });
+$("hangup").addEventListener("click", () => { $("hangup").blur(); if (rt) { rt.hangup(); } else if (call) endUi({ kind: "ended", text: "You hung up." }); });
 $("sendDtmf").addEventListener("click", sendDtmf);
 $("clearDtmf").addEventListener("click", () => $("queue").textContent = " ");
 $("say").addEventListener("click", saySpeech);
 $("speech").addEventListener("keydown", (e) => { if (e.key === "Enter") saySpeech(); });
-$("dl").addEventListener("click", () => {
-  if (!call) return;
-  const blob = new Blob([call.transcript()], { type: "text/plain" });
-  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `${treeName}-transcript.txt` });
+let lastAgentRun = null;
+$("dl").addEventListener("click", async () => {
+  const c = rt ? rt.call : call;
+  let text = c ? c.transcript() : null, name = treeName;
+  if (!text && lastAgentRun) {
+    try { const st = await (await fetch(`/api/rt/calls/${lastAgentRun.callId}`)).json(); text = st.transcript; name = "agent-run"; } catch {}
+  }
+  if (!text) { sys("no transcript yet: dial (or run your agent) first"); return; }
+  const blob = new Blob([text], { type: "text/plain" });
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `${name}-transcript.txt` });
   a.click();
 });
 
 function dial() {
-  const live = (rt && !rt._done) || (call && !call._ended);
-  if (live && !confirm("A call is in progress. Hang up and redial?")) return;
+  const live = (rt && !rt.isEnded()) || (call && !call.isEnded());
+  if (live && !armed($("dial"), "Call live: click again to redial")) return;
   if (rt) { rt.hangup(); rt = null; }
   if ($("rtMode").checked) return rtDial();
   rt = null;
@@ -416,6 +491,7 @@ function dial() {
   $("payerName").textContent = tree.payer.replace(" (FICTIONAL)", "");
   $("payerNum").textContent = tree.phone;
   setState("live");
+  $("metricLabel").textContent = "Hold time (synthetic)";
   $("dock").classList.remove("disabled");
   sys(`dialing ${tree.phone}…`);
   bubble("ivr", tree.greeting);
@@ -447,7 +523,7 @@ function rtDial() {
   tree = trees[treeName];
   call = null;
   path = [];
-  const TS = [0.06, 0.3, 1][+$("hs").value];
+  const TS = [1, 0.3, 0.06][+$("hs").value];
   // Humans type slower than agents act: pin the silence window to 12 REAL
   // seconds regardless of playback speed (graders use the scaled clock).
   rt = new RealtimeCall(tree, { seed: +$("seed").value, mishearRate: +$("mh").value, timeScale: TS, inputTimeoutMs: 12000 / TS, debug: true });
@@ -455,15 +531,19 @@ function rtDial() {
   $("payerName").textContent = tree.payer.replace(" (FICTIONAL)", "");
   $("payerNum").textContent = tree.phone;
   setState("live");
+  $("metricLabel").textContent = "Words heard (grading currency)";
   $("dock").classList.remove("disabled");
   sys(`dialing ${tree.phone}… (REALTIME ×${TS}: speech streams, you have 12s of silence per turn, input mid-prompt barges in)`);
   const timeoutMs = rt.inputTimeoutMs * TS;
+  let wasTimeout = false;
   rt.onEvent((e) => {
     clearSilence();
+    if (e.kind === "timeout") wasTimeout = true;
     if (e.kind === "speech-start") {
       trackPath(e.node); refreshRtDebug();
       curBubble = document.createElement("div");
-      curBubble.className = "msg ivr streaming" + (e.sourceKind === "reprompt" ? " bad" : "");
+      curBubble.className = "msg ivr streaming" + (e.sourceKind === "reprompt" ? (wasTimeout ? " to" : " bad") : "");
+      wasTimeout = false;
       $("feed").appendChild(curBubble); scroll();
     }
     else if (e.kind === "speech-chunk") {
@@ -493,7 +573,7 @@ function startSilence(ms) {
   silenceEl.innerHTML = `your turn — silence hangs up<div class="sbar"><i></i></div>`;
   $("feed").appendChild(silenceEl); scroll();
   const bar = silenceEl.querySelector("i");
-  requestAnimationFrame(() => { bar.style.transitionDuration = ms + "ms"; bar.style.width = "0%"; });
+  requestAnimationFrame(() => { bar.style.transitionDuration = ms + "ms"; bar.style.transform = "scaleX(0)"; });
 }
 function clearSilence() { if (silenceEl) { silenceEl.remove(); silenceEl = null; } }
 function refreshRtDebug() {
@@ -528,7 +608,7 @@ async function handle(ev) {
     banner("rep", "WARM TRANSFER POINT", `A human rep is live after ${Math.round(call.holdTimeMs() / 1000)}s (scaled) on hold. In production the biller is bridged here with a claim screen-pop. Your agent's job ends now.`);
   }
   else if (ev.kind === "readout") {
-    banner("readout", "AUTOMATED READOUT (Layer 4: capture + parse this)", ev.text);
+    banner("readout", "AUTOMATED READOUT (capture + parse this)", ev.text);
     if (ev.followup) {
       bubble("ivr", ev.followup);
     } else {
@@ -569,7 +649,7 @@ function holdBox(ms) {
   const bar = d.querySelector("i"); const t0 = Date.now();
   const iv = setInterval(() => {
     const p = Math.min(100, ((Date.now() - t0) / ms) * 100);
-    bar.style.width = p + "%";
+    bar.style.transform = `scaleX(${(p / 100).toFixed(3)})`;
     if (p >= 100) clearInterval(iv);
   }, 120);
   return d;

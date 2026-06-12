@@ -108,6 +108,9 @@ export class IVRCall {
   /** Synthetic metric: ms the caller spent "on hold" (scaled). */
   holdTimeMs() { return this._holdMs; }
 
+  /** Public call-state accessor; do not reach for _ended. */
+  isEnded() { return this._ended; }
+
   // ---------- internals ----------
 
   _handleMenu(node, inp) {
