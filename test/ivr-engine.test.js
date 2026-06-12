@@ -156,3 +156,19 @@ test("granite-medicare: malformed multitap PTAN gets a retry, then works", () =>
   ev = call.input({ type: "dtmf", value: "7w0w1w2222w3333w4444" });
   assert.equal(ev.node, "tin");
 });
+
+test("readout variants: outcome depends on captured DOS", () => {
+  const tree = load("granite-medicare");
+  const run = (dos) => {
+    const c = new IVRCall(tree, { seed: 9, mishearRate: 0 });
+    c.start();
+    c.input({ type: "dtmf", value: "1" });
+    c.input({ type: "dtmf", value: "1234567890#" });
+    c.input({ type: "dtmf", value: "7w0w1w2222w3333w4444" });
+    c.input({ type: "dtmf", value: "123456789" });
+    return c.input({ type: "dtmf", value: dos }).text;
+  };
+  assert.ok(run("06152026").includes("finalized"));
+  assert.ok(run("07012026").includes("denied"));
+  assert.ok(run("12252026").includes("No claim on file"));
+});

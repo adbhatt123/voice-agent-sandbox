@@ -4,6 +4,12 @@ A self-contained testing environment for the payer-call automation project
 (see "Payer Call Automation: Implementation Brief"). Zero dependencies, zero
 PHI, zero real phone calls. Runs anywhere with Node 18+.
 
+**V1 PRODUCTION SCOPE (read this first):** the first thing we ship is a
+fully automated agent for END-TO-END IVRs like Medicare's self-service
+lines, where no human rep exists. That scenario is `granite-medicare` here,
+and your benchmark for it is `missions/granite-run.md`. The other payers
+(rep trees, warm transfer) matter later; Granite is the destination.
+
 ```bash
 npm test            # run all sandbox tests
 npm run web         # browser UI: dial fake payers with a keypad + live transcript
@@ -34,8 +40,8 @@ dependencies, so there is no `npm install` step.
    cd voice-agent-sandbox
    ```
 
-3. Verify your environment. Expected: 18 pass, 0 fail, 13 skipped (the
-   skips are the phonetic library — your deliverable):
+3. Verify your environment. Expected: 21 pass, 0 fail, 15 skipped (the
+   skips are the phonetic library and the mission — your deliverables):
 
    ```bash
    npm test
@@ -89,6 +95,7 @@ YOU BUILD (the deliverables, per the brief):
 
 | Deliverable | Where | Definition of done |
 |---|---|---|
+| **The Granite Run (V1 BENCHMARK)** | `src/my-agent.js` per `missions/granite-run.md` | Mission tests in `test/mission-granite.test.js` flip from skipped to passing: one call, all claims, structured results, no hardcoding |
 | Phonetic/dialing library (Layer 2) | implement `src/phonetic.js` | All tests in `test/phonetic.test.js` pass (they currently skip as "pending"). Pure functions, no I/O |
 | Navigation agent (Layer 1) | your code, imports the engine | Reaches `rep` or `readout` on all 4 trees, including mishearing recovery, the confirmation loop, and multi-tap letter entry, with zero leaked identifiers in its logs |
 | Hold/transfer logic (Layer 3) | your code | Detects `hold` state, "bridges" (callback) the instant `rep` fires; measure synthetic biller-seconds saved |
@@ -135,6 +142,40 @@ console.log(call.transcript());             // full call log for debugging
 
 `seed` makes mishearing deterministic for tests. `holdScale` shrinks hold
 times (1.0 = realistic minutes, 0.01 = test speed).
+
+## Call API: how an agent dials in
+
+`npm run web` also serves a REST API, shaped like a telephony vendor's call
+API on purpose, so your agent can live in any language or process:
+
+```
+GET  /api/trees                    list payers
+POST /api/calls                    { "tree": "granite-medicare", "seed": 7 } -> { callId, event }
+POST /api/calls/:id/input          { "type": "dtmf", "value": "1" } -> { event }
+GET  /api/calls/:id                state: ended, captured, holdTimeMs, transcript
+GET  /api/calls/:id/rep            long-poll until the rep answers (hold trees)
+```
+
+Try it from a terminal while the server runs:
+
+```bash
+curl -s -X POST localhost:4321/api/calls \
+  -H 'content-type: application/json' \
+  -d '{"tree":"granite-medicare","mishearRate":0}'
+```
+
+`test/call-api.test.js` drives a complete Granite run over HTTP and is a
+working reference client. In-process (`import { IVRCall }`) and over-HTTP
+are equivalent; the API exists so your agent's transport layer is already
+network-shaped when we swap in a real telephony vendor.
+
+## The mission (manual first, then agentic)
+
+`missions/granite-run.md` is the graded test case. Phase 1: complete it by
+hand in the web UI and check your answers against the fixture. Phase 2:
+create `src/my-agent.js`; the mission tests stop skipping and grade your
+agent on the exact same criteria. One call, three claims, three different
+outcomes (paid / denied CO-16 / not on file), structured output.
 
 ## PHI ground rules (synthetic or not)
 

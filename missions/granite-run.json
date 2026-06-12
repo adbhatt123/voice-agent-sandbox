@@ -1,0 +1,21 @@
+{
+  "mission": "granite-run",
+  "description": "Retrieve claim status for all claims below in ONE call to Granite Medicare (fictional). This is the v1 production scenario: fully automated, no human.",
+  "tree": "granite-medicare",
+  "provider": {
+    "npi": "1234567890",
+    "ptan": "P01234",
+    "tin": "123456789",
+    "NOTE": "All synthetic. PTAN must be entered via multi-tap DTMF."
+  },
+  "claims": [
+    { "dos": "06152026" },
+    { "dos": "07012026" },
+    { "dos": "08012026" }
+  ],
+  "expected": [
+    { "dos": "06152026", "status": "finalized", "reasonCode": null },
+    { "dos": "07012026", "status": "denied", "reasonCode": "CO-16" },
+    { "dos": "08012026", "status": "not_found", "reasonCode": null }
+  ]
+}

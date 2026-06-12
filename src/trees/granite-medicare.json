@@ -58,7 +58,13 @@
     },
     "status": {
       "kind": "readout",
-      "template": "One claim on file for date of service {dos}, N P I {npi}, P TAN {ptan}. Claim status: finalized. Paid amount: one thousand two hundred forty dollars and ten cents. Payment date: the fourth of this month. Check number: nine nine zero one one. Remark code: none.",
+      "template": "No claim on file for date of service {dos}.",
+      "variantsOn": "dos",
+      "variants": {
+        "06152026": "One claim on file for date of service {dos}, N P I {npi}, P TAN {ptan}. Claim status: finalized. Paid amount: one thousand two hundred forty dollars and ten cents. Payment date: the fourth of this month. Check number: nine nine zero one one. Remark code: none.",
+        "07012026": "One claim on file for date of service {dos}, N P I {npi}, P TAN {ptan}. Claim status: denied. Reason code: C O dash one six. Claim lacks information needed for adjudication. A remittance advice was mailed. Appeal rights apply.",
+        "*": "No claim on file for date of service {dos}. Please verify the date and try again."
+      },
       "next": "again"
     },
     "again": {

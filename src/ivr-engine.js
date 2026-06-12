@@ -161,7 +161,12 @@ export class IVRCall {
     }
     if (node.kind === "rep") return this._enterRepNow(node);
     if (node.kind === "readout") {
-      const text = renderTemplate(node.template, this.captured);
+      let tpl = node.template;
+      if (node.variantsOn && node.variants) {
+        const key = this.captured[node.variantsOn];
+        tpl = node.variants[key] ?? node.variants["*"] ?? tpl;
+      }
+      const text = renderTemplate(tpl, this.captured);
       this._say(text);
       if (node.next) {
         const nx = this.tree.nodes[node.next];
