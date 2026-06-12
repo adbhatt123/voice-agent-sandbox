@@ -37,6 +37,24 @@ button.primary{background:var(--ruby);border-color:var(--ruby);color:#fff;font-w
 button.primary:hover{background:#7E211C}
 .hint{font-size:11.5px;color:var(--faint);margin-top:16px;line-height:1.5}
 
+/* ---- tabs ---- */
+.tabs{display:flex;gap:6px;margin-bottom:14px}
+.tab{flex:1;padding:9px 6px;font-size:12px;font-weight:600;border-radius:9px;border:1.5px solid var(--line);background:var(--bg);color:var(--soft)}
+.tab.active{border-color:var(--ruby);background:var(--ruby-soft);color:var(--ruby)}
+.tab small{display:block;font-weight:400;font-size:9.5px;color:var(--faint);margin-top:1px}
+
+/* ---- fixture panel ---- */
+.fix{border:1.5px solid #EEDFC2;background:#FDF8EE;border-radius:12px;padding:12px 13px;margin-bottom:18px}
+.fix h3{font-size:11px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;color:#7A5A14;margin-bottom:8px}
+.fix .kv{border-color:#F0E6CF}
+.fix .kv b{cursor:pointer;border-bottom:1px dashed #C9A86A}
+.fix .kv b:hover{color:var(--ruby)}
+.fix .exp{font-size:10px;font-family:var(--mono);padding:1px 7px;border-radius:100px;margin-left:6px}
+.fix .exp.ok{background:var(--green-bg);color:var(--green)}
+.fix .exp.bad{background:var(--red-bg);color:var(--red)}
+.fix .exp.none{background:#EFEAE5;color:var(--soft)}
+.fix .note{font-size:10.5px;color:#8A7440;margin-top:8px;line-height:1.45}
+
 /* ---- center: the call ---- */
 .callcol{display:flex;flex-direction:column;min-width:0;min-height:0}
 .callbar{display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:1px solid var(--line);background:var(--panel)}
@@ -98,6 +116,10 @@ button.primary:hover{background:#7E211C}
 
 <div class="layout">
   <aside class="side">
+    <div class="tabs">
+      <button class="tab active" data-tab="full">1 · Full IVR<small>end-to-end · v1 scope</small></button>
+      <button class="tab" data-tab="semi">2 · Semi IVR<small>rep + warm transfer · later</small></button>
+    </div>
     <h2>Pick a payer</h2>
     <div id="payers"></div>
     <div class="set">
@@ -140,6 +162,11 @@ button.primary:hover{background:#7E211C}
   </main>
 
   <aside class="right">
+    <div class="fix" id="fix" style="display:none">
+      <h3>Granite Run test data (click to load keypad)</h3>
+      <div id="fixRows"></div>
+      <div class="note">All synthetic. PTAN loads as multi-tap automatically. Expected outcomes are your phase-1 self-check (missions/granite-run.md).</div>
+    </div>
     <h2>Hold time (synthetic)</h2>
     <div class="metric" id="holdMetric">0s</div>
     <h2>What the IVR captured</h2>
@@ -162,16 +189,60 @@ let call = null, tree = null, treeName = TREES[0], path = [];
 const trees = {};
 for (const n of TREES) trees[n] = await (await fetch(`../src/trees/${n}.json`)).json();
 
-// payer cards
-$("payers").innerHTML = TREES.map((n) => {
-  const t = trees[n];
-  return `<div class="payer" data-n="${n}"><span class="stars">${"♦".repeat(t.difficulty)}</span><b>${t.payer.replace(" (FICTIONAL)", "")}</b><span>${t.phone} · fictional</span></div>`;
-}).join("");
-document.querySelectorAll(".payer").forEach((el) => el.addEventListener("click", () => {
-  treeName = el.dataset.n;
-  document.querySelectorAll(".payer").forEach((p) => p.classList.toggle("active", p === el));
+// tabs: 1 = full IVR (end-to-end, v1), 2 = semi IVR (rep trees)
+let tab = "full";
+function renderPayers() {
+  const names = TREES.filter((n) => (tab === "full") === !!trees[n].endToEnd);
+  $("payers").innerHTML = names.map((n) => {
+    const t = trees[n];
+    return `<div class="payer" data-n="${n}"><span class="stars">${"♦".repeat(t.difficulty)}</span><b>${t.payer.replace(" (FICTIONAL)", "")}</b><span>${t.phone} · fictional</span></div>`;
+  }).join("");
+  document.querySelectorAll(".payer").forEach((el) => el.addEventListener("click", () => {
+    treeName = el.dataset.n;
+    document.querySelectorAll(".payer").forEach((p) => p.classList.toggle("active", p === el));
+  }));
+  const first = document.querySelector(".payer");
+  if (first) { first.classList.add("active"); treeName = first.dataset.n; }
+  $("fix").style.display = tab === "full" ? "" : "none";
+}
+document.querySelectorAll(".tab").forEach((el) => el.addEventListener("click", () => {
+  tab = el.dataset.tab;
+  document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t === el));
+  renderPayers();
 }));
-document.querySelector(".payer").classList.add("active");
+renderPayers();
+
+// fixture panel: the data you test against, click-to-load
+const MULTITAP = (() => {
+  const KEYS2 = { "2": "ABC", "3": "DEF", "4": "GHI", "5": "JKL", "6": "MNO", "7": "PQRS", "8": "TUV", "9": "WXYZ" };
+  const m = { "0": "0", "1": "1" };
+  for (const [d, ls] of Object.entries(KEYS2)) {
+    [...ls].forEach((L, i) => m[L] = d.repeat(i + 1));
+    m[d] = d.repeat(ls.length + 1);
+  }
+  return (s) => [...String(s).toUpperCase()].map((c) => m[c] ?? c).join("w");
+})();
+try {
+  const fx = await (await fetch("../missions/granite-run.json")).json();
+  const expChip = (e) => e.status === "finalized" ? `<span class="exp ok">paid</span>`
+    : e.status === "denied" ? `<span class="exp bad">${e.reasonCode}</span>`
+    : `<span class="exp none">not found</span>`;
+  const rows = [
+    ["NPI", fx.provider.npi, fx.provider.npi + "#"],
+    ["PTAN " + fx.provider.ptan, MULTITAP(fx.provider.ptan), MULTITAP(fx.provider.ptan)],
+    ["TIN", fx.provider.tin, fx.provider.tin],
+    ...fx.claims.map((c, i) => {
+      const e = fx.expected.find((x) => x.dos === c.dos);
+      return ["DOS " + (i + 1) + (e ? expChip(e) : ""), c.dos, c.dos];
+    }),
+  ];
+  $("fixRows").innerHTML = rows.map(([k, shown, load]) =>
+    `<div class="kv"><span>${k}</span><b data-load="${load}" title="click to load into keypad">${shown}</b></div>`).join("");
+  $("fixRows").addEventListener("click", (e) => {
+    const v = e.target.dataset?.load;
+    if (v) { $("queue").textContent = v; e.target.style.color = "var(--ruby)"; }
+  });
+} catch { $("fix").style.display = "none"; }
 
 // keypad
 const KEYS = ["1","2","3","4","5","6","7","8","9","*","0","#"];
