@@ -1,0 +1,61 @@
+{
+  "payer": "Sundial Medicare (FICTIONAL)",
+  "phone": "+1-555-0188",
+  "difficulty": 3,
+  "greeting": "You have reached Sundial Medicare provider line. This system uses speech recognition.",
+  "root": "root",
+  "nodes": {
+    "root": {
+      "kind": "menu",
+      "prompt": "In a few words, tell me what you're calling about. You can say claims, eligibility, or appeals.",
+      "inputs": { "speech:claims": "npi", "speech:eligibility": "npi", "speech:appeals": "hold" },
+      "retryPrompt": "I'm sorry, I didn't understand. You can say claims, eligibility, or appeals.",
+      "maxRetries": 2,
+      "failText": "I'm having trouble understanding. Please call back later. Goodbye."
+    },
+    "npi": {
+      "kind": "capture",
+      "prompt": "Please say the ten digit provider N P I, one digit at a time.",
+      "capture": "npi",
+      "via": ["speech"],
+      "rejectText": "This system requires spoken responses.",
+      "pattern": "^[0-9]{10}$",
+      "invalidText": "That N P I does not appear to be valid.",
+      "maxRetries": 2,
+      "next": "member-id"
+    },
+    "member-id": {
+      "kind": "capture",
+      "prompt": "Say the member number. It is four digits, two letters, then four digits.",
+      "capture": "memberId",
+      "via": ["speech"],
+      "pattern": "^[0-9]{4}[A-Z]{2}[0-9]{4}$",
+      "invalidText": "That member number does not match our records format.",
+      "confirm": true,
+      "maxRetries": 2,
+      "failText": "We are unable to verify the member. Goodbye.",
+      "next": "route"
+    },
+    "route": {
+      "kind": "menu",
+      "prompt": "Say status to hear automated claim status, or say representative to wait for an agent.",
+      "inputs": { "speech:status": "status-readout", "speech:representative": "hold" },
+      "maxRetries": 2
+    },
+    "status-readout": {
+      "kind": "readout",
+      "template": "For member {memberId}, N P I {npi}: one claim on file. Status: denied. Reason code C O dash one six, additional information required. A remittance was mailed. To appeal, submit within sixty days. Thank you."
+    },
+    "hold": {
+      "kind": "hold",
+      "prompt": "Please hold. Current wait time is greater than twenty minutes.",
+      "minMs": 1200000,
+      "maxMs": 3600000,
+      "next": "rep"
+    },
+    "rep": {
+      "kind": "rep",
+      "prompt": "Sundial provider services, representative speaking. May I have your name and the N P I?"
+    }
+  }
+}

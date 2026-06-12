@@ -1,0 +1,84 @@
+{
+  "payer": "Meridian Blue (FICTIONAL)",
+  "phone": "+1-555-0142",
+  "difficulty": 2,
+  "greeting": "Welcome to Meridian Blue. Para espanol, oprima el nueve. For providers, press 1.",
+  "root": "root",
+  "nodes": {
+    "root": {
+      "kind": "menu",
+      "prompt": "For providers, press 1. For members, press 2.",
+      "inputs": { "dtmf:1": "provider", "dtmf:2": "member-dead-end" },
+      "maxRetries": 1,
+      "failText": "Goodbye."
+    },
+    "member-dead-end": {
+      "kind": "hangup",
+      "prompt": "Please have your member call the number on the back of their card. Goodbye."
+    },
+    "provider": {
+      "kind": "menu",
+      "prompt": "For claim status, press 1. For prior authorization, press 2. For credentialing, press 3.",
+      "inputs": { "dtmf:1": "member-id", "dtmf:2": "auth-id", "dtmf:3": "member-dead-end" },
+      "maxRetries": 1,
+      "failText": "We did not receive a valid response. Goodbye."
+    },
+    "member-id": {
+      "kind": "capture",
+      "prompt": "Enter or say the member I D. Member I Ds are three letters followed by seven digits followed by one letter.",
+      "capture": "memberId",
+      "via": ["dtmf", "speech"],
+      "pattern": "^[A-Z]{3}[0-9]{7}[A-Z]$",
+      "invalidText": "That does not match a valid member I D.",
+      "confirm": true,
+      "maxRetries": 1,
+      "failText": "Too many invalid entries. Please call back with the member I D ready. Goodbye.",
+      "next": "dos"
+    },
+    "auth-id": {
+      "kind": "capture",
+      "prompt": "Enter the ten digit authorization reference number.",
+      "capture": "authRef",
+      "via": ["dtmf"],
+      "pattern": "^[0-9]{10}$",
+      "maxRetries": 1,
+      "next": "auth-readout"
+    },
+    "auth-readout": {
+      "kind": "readout",
+      "template": "Authorization {authRef} is approved for twelve units, valid through the last day of next month. Thank you."
+    },
+    "dos": {
+      "kind": "capture",
+      "prompt": "Enter the eight digit date of service. For example, zero six one five two zero two six.",
+      "capture": "dos",
+      "via": ["dtmf", "speech"],
+      "pattern": "^[0-9]{8}$",
+      "invalidText": "That is not a valid date.",
+      "maxRetries": 1,
+      "failText": "Too many invalid entries. Goodbye.",
+      "next": "route"
+    },
+    "route": {
+      "kind": "menu",
+      "prompt": "To hear automated claim status, press 1. To speak with a representative, press 0.",
+      "inputs": { "dtmf:1": "status-readout", "dtmf:0": "hold" },
+      "maxRetries": 2
+    },
+    "status-readout": {
+      "kind": "readout",
+      "template": "Claim for member {memberId}, date of service {dos}, was received and is in process. Allow thirty days. Thank you for calling Meridian Blue."
+    },
+    "hold": {
+      "kind": "hold",
+      "prompt": "All representatives are assisting other callers. Your call will be answered in the order received.",
+      "minMs": 600000,
+      "maxMs": 2400000,
+      "next": "rep"
+    },
+    "rep": {
+      "kind": "rep",
+      "prompt": "Provider services, you're speaking with a representative. Can I have the member I D you're calling about?"
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "voice-agent-sandbox",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PHI-free testing environment for payer-call automation: mock IVR engine, fictional payer trees, phonetic library test harness, masking logger.",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "test": "node --test",
+    "call": "node src/cli.js",
+    "demo": "node src/agent-example.js"
+  }
+}

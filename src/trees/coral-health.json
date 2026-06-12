@@ -1,0 +1,52 @@
+{
+  "payer": "Coral Health (FICTIONAL)",
+  "phone": "+1-555-0100",
+  "difficulty": 1,
+  "greeting": "Thank you for calling Coral Health provider services. This call may be monitored.",
+  "root": "root",
+  "nodes": {
+    "root": {
+      "kind": "menu",
+      "prompt": "For claim status, press 1. For eligibility and benefits, press 2.",
+      "inputs": { "dtmf:1": "claims-id", "dtmf:2": "elig-id" },
+      "retryPrompt": "Sorry, I didn't get that. For claims press 1, for eligibility press 2.",
+      "maxRetries": 2,
+      "failText": "We are unable to process your request at this time. Goodbye."
+    },
+    "claims-id": {
+      "kind": "capture",
+      "prompt": "Using your keypad, enter the nine digit member number, followed by the pound key.",
+      "capture": "memberId",
+      "via": ["dtmf"],
+      "rejectText": "This menu accepts keypad entry only.",
+      "pattern": "^[0-9]{9}#?$",
+      "invalidText": "That member number is not valid.",
+      "maxRetries": 2,
+      "next": "claims-hold"
+    },
+    "claims-hold": {
+      "kind": "hold",
+      "prompt": "Please hold for the next available claims representative.",
+      "minMs": 180000,
+      "maxMs": 600000,
+      "next": "rep"
+    },
+    "rep": {
+      "kind": "rep",
+      "prompt": "Claims department, this is a representative speaking. Tax ID and member number please?"
+    },
+    "elig-id": {
+      "kind": "capture",
+      "prompt": "Enter the nine digit member number followed by pound to hear eligibility.",
+      "capture": "memberId",
+      "via": ["dtmf"],
+      "pattern": "^[0-9]{9}#?$",
+      "maxRetries": 2,
+      "next": "elig-readout"
+    },
+    "elig-readout": {
+      "kind": "readout",
+      "template": "Member {memberId} is active with plan group five five five zero. Deductible remaining: four hundred dollars. Thank you for calling Coral Health."
+    }
+  }
+}
