@@ -240,9 +240,9 @@ try {
     `<div class="kv"><span>${k}</span><b data-load="${load}" title="click to load into keypad">${shown}</b></div>`).join("");
   const items = fx.workItems.map((wi) => `
     <div class="wi">
-      <div class="who">${wi.patient.name}<span>${wi.claimNumber} &middot; ${wi.workItemId}</span></div>
-      <div class="meta">${wi.drug.name} &middot; ${wi.drug.jCode} &times; ${wi.drug.units} &middot; $${wi.billed.toLocaleString()}<span class="cls">${wi.classification}</span></div>
-      <div class="kv"><span>DOS ${wi.dos}${expChip(wi.expectedCallOutcome)}</span><b data-load="${wi.dosDtmf}" title="click to load into keypad">${wi.dosDtmf}</b></div>
+      <div class="who">${wi.encounter.patientName}<span>clm ${wi.encounter.claimNumber} &middot; ${wi.id}</span></div>
+      <div class="meta">${wi.encounter.drug} &middot; ${wi.encounter.jCode} &middot; $${wi.billedAmount.toLocaleString()} &middot; ${wi.encounter.daysInAR}d AR<span class="cls">${wi.type}${wi.denialCode ? " " + wi.denialCode : ""}</span></div>
+      <div class="kv"><span>DOS ${wi.encounter.dos}${expChip(wi.expectedCallOutcome)}</span><b data-load="${wi.dosDtmf}" title="click to load into keypad">${wi.dosDtmf}</b></div>
     </div>`).join("");
   $("fixRows").innerHTML = prov + items;
   $("fixRows").addEventListener("click", (e) => {

@@ -5,13 +5,22 @@ end-to-end claim-status call against a Medicare-style self-service IVR.
 You will complete it twice — first by hand, then with an agent. Same
 inputs, same acceptance criteria, both times.
 
-Fixture: `granite-run.json` — one synthetic provider and three WORK ITEMS
-shaped exactly like the Casa AR workbench hands them to a biller (same
-field names: workItemId, encounterId, claimNumber, patient, payer, drug
-with J-code and units, dos, billed, classification, nextAction). The data
-is fake; the schema is the production contract. When this agent moves to
-Casa, the input shape does not change — only the data source does. Results
-key back to `encounterId`, because in Casa every call outcome becomes an
+Fixture: `granite-run.json`. Every field name is copied from the Casa
+platform verbatim, so solving this in the sandbox ports 1:1 into Casa's
+existing "Call Payer" flow:
+
+| Sandbox fixture | Casa source of truth |
+|---|---|
+| `workItems[].id, encounterId, type, denialCode, billedAmount, status, priorityTier` | `WorkItem` model (prisma/schema.prisma); `type` values: DENIAL, NO_RESPONSE, UNDERPAYMENT, ... |
+| `workItems[].encounter.{patientName, dos, drug, jCode, primaryPayer, claimNumber, totalBilled, daysInAR}` | `ArEncounter` model (flat fields, exact names; `dos` is "YYYY-MM-DD") |
+| `provider.{npi, ptan, tin}` | practice-level settings (not on the encounter) |
+| result `payerContact` | `PayerContactData` (payer-contact-modal.tsx): interactionId, repName, callOutcome, expectedResolutionDate, promisedPaymentAmount, notes, pushToWeinfuse |
+| result delivery | `POST /api/ar/workbench/items/{workItemId}/notes` with `noteType: "payer_contact"`, metadata = PayerContactData (see handlePayerContact in the work-item page) |
+| dialed phone number | `lookupPayerPhone(encounter.primaryPayer)` from src/lib/payer-phone-directory |
+
+`callOutcome` must be one of Casa's CALL_OUTCOMES (listed in the fixture's
+`writeback` block). `dosDtmf` is the only sandbox-only convenience field.
+Results key to `encounterId` because in Casa every call outcome becomes an
 ENCOUNTER-scoped note, never a patient-scoped one.
 
 ## Phase 1 — manual (week 1-2)
@@ -39,13 +48,24 @@ export async function runGraniteMission(fixture) {
   // authenticate with fixture.provider, loop fixture.workItems (use
   // wi.dosDtmf on the keypad), parse each readout, hang up.
   return fixture.workItems.map((wi) => ({
-    encounterId: wi.encounterId,          // writeback key (Casa note target)
-    dos: wi.dos,                          // ISO, echoed from the work item
-    status: "finalized",                  // parsed from the readout
-    reasonCode: null,                     // e.g. "CO-16" when denied
+    workItemId: wi.id,
+    encounterId: wi.encounterId,            // Casa notes are encounter-scoped
+    parsed: { status: "finalized", reasonCode: null },  // from the readout
+    payerContact: {                          // PayerContactData, 1:1 with Casa
+      interactionId: "IVR-99011",            // call reference (check #, etc.)
+      repName: "Granite IVR (automated)",
+      callOutcome: "Paid - Pending",         // must be a Casa CALL_OUTCOMES value
+      expectedResolutionDate: "",
+      promisedPaymentAmount: "",
+      notes: "<verbatim readout text>",      // evidence trail
+      pushToWeinfuse: false,
+    },
   }));
 }
 ```
+
+In production the same object becomes the body of Casa's payer_contact
+note POST — the grading here checks the exact shape the modal submits.
 
 The moment that file exists, `npm test` stops skipping
 `test/mission-granite.test.js` and grades you: results must match the

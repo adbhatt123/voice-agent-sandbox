@@ -1,59 +1,87 @@
 {
   "mission": "granite-run",
-  "schema": "casa.workItem.v1 — field names mirror the Casa AR workbench (ArEncounter / WorkItem). Data is 100% synthetic; ids are fake cuids. Portability is the point: in production the agent receives exactly this shape from the workbench and writes results back as ENCOUNTER-scoped notes.",
+  "schema": "casa.callPayer.v1 — field names are copied from the Casa platform verbatim: WorkItem + ArEncounter (prisma/schema.prisma) on the input side, and the Call Payer flow's PayerContactData + payer_contact note (payer-contact-modal.tsx, handlePayerContact) on the writeback side. Data is 100% synthetic.",
   "tree": "granite-medicare",
   "provider": {
     "name": "Sundance Infusion Center (FICTIONAL)",
     "npi": "1234567890",
     "ptan": "P01234",
-    "tin": "123456789"
+    "tin": "123456789",
+    "NOTE": "practice-level credentials; in Casa these come from practice settings, not ArEncounter"
   },
   "workItems": [
     {
-      "workItemId": "wi_fake_gr001",
+      "id": "wi_fake_gr001",
       "encounterId": "cmfake01granite0615aaaa01",
-      "claimNumber": "886901",
-      "patient": { "name": "R. Calloway", "dobMasked": "**/**/1958" },
-      "payer": { "name": "Granite Medicare Part B (FICTIONAL)", "planType": "Medicare B" },
-      "drug": { "name": "Infliximab", "jCode": "J1745", "units": 40 },
-      "dos": "2026-06-15",
+      "type": "NO_RESPONSE",
+      "denialCode": null,
+      "billedAmount": 14820.0,
+      "status": "new",
+      "priorityTier": "high",
+      "encounter": {
+        "id": "cmfake01granite0615aaaa01",
+        "patientName": "R. Calloway",
+        "dos": "2026-06-15",
+        "drug": "Infliximab",
+        "jCode": "J1745",
+        "primaryPayer": "Granite Medicare Part B (FICTIONAL)",
+        "claimNumber": "886901",
+        "totalBilled": 14820.0,
+        "daysInAR": 64
+      },
       "dosDtmf": "06152026",
-      "billed": 14820.0,
-      "classification": "no_response",
-      "nextAction": "payer_call_status",
-      "expectedCallOutcome": { "status": "finalized", "reasonCode": null }
+      "expectedCallOutcome": { "status": "finalized", "reasonCode": null, "callOutcome": "Paid - Pending" }
     },
     {
-      "workItemId": "wi_fake_gr002",
+      "id": "wi_fake_gr002",
       "encounterId": "cmfake02granite0701bbbb02",
-      "claimNumber": "886944",
-      "patient": { "name": "T. Ibarra", "dobMasked": "**/**/1947" },
-      "payer": { "name": "Granite Medicare Part B (FICTIONAL)", "planType": "Medicare B" },
-      "drug": { "name": "Ocrelizumab", "jCode": "J2350", "units": 600 },
-      "dos": "2026-07-01",
+      "type": "DENIAL",
+      "denialCode": "CO-16",
+      "billedAmount": 31250.0,
+      "status": "new",
+      "priorityTier": "critical",
+      "encounter": {
+        "id": "cmfake02granite0701bbbb02",
+        "patientName": "T. Ibarra",
+        "dos": "2026-07-01",
+        "drug": "Ocrelizumab",
+        "jCode": "J2350",
+        "primaryPayer": "Granite Medicare Part B (FICTIONAL)",
+        "claimNumber": "886944",
+        "totalBilled": 31250.0,
+        "daysInAR": 48
+      },
       "dosDtmf": "07012026",
-      "billed": 31250.0,
-      "classification": "denial",
-      "nextAction": "payer_call_status",
-      "expectedCallOutcome": { "status": "denied", "reasonCode": "CO-16" }
+      "expectedCallOutcome": { "status": "denied", "reasonCode": "CO-16", "callOutcome": "Denied" }
     },
     {
-      "workItemId": "wi_fake_gr003",
+      "id": "wi_fake_gr003",
       "encounterId": "cmfake03granite0801cccc03",
-      "claimNumber": "887012",
-      "patient": { "name": "L. Fontaine", "dobMasked": "**/**/1963" },
-      "payer": { "name": "Granite Medicare Part B (FICTIONAL)", "planType": "Medicare B" },
-      "drug": { "name": "IVIG", "jCode": "J1569", "units": 30 },
-      "dos": "2026-08-01",
+      "type": "NO_RESPONSE",
+      "denialCode": null,
+      "billedAmount": 22480.0,
+      "status": "new",
+      "priorityTier": "standard",
+      "encounter": {
+        "id": "cmfake03granite0801cccc03",
+        "patientName": "L. Fontaine",
+        "dos": "2026-08-01",
+        "drug": "IVIG",
+        "jCode": "J1569",
+        "primaryPayer": "Granite Medicare Part B (FICTIONAL)",
+        "claimNumber": "887012",
+        "totalBilled": 22480.0,
+        "daysInAR": 33
+      },
       "dosDtmf": "08012026",
-      "billed": 22480.0,
-      "classification": "no_response",
-      "nextAction": "payer_call_status",
-      "expectedCallOutcome": { "status": "not_found", "reasonCode": null }
+      "expectedCallOutcome": { "status": "not_found", "reasonCode": null, "callOutcome": "Other" }
     }
   ],
-  "resultContract": {
-    "shape": [{ "encounterId": "string", "dos": "YYYY-MM-DD", "status": "finalized|denied|not_found", "reasonCode": "string|null", "raw": "verbatim readout text (optional)" }],
-    "writeback": "in Casa these become encounter-scoped notes + status updates on the work item, never patient-scoped"
+  "writeback": {
+    "endpoint": "POST /api/ar/workbench/items/{workItemId}/notes",
+    "noteType": "payer_contact",
+    "metadataShape": "PayerContactData: { interactionId, repName, callOutcome, expectedResolutionDate, promisedPaymentAmount, notes, pushToWeinfuse }",
+    "CALL_OUTCOMES": ["Claim in Process", "Additional Info Needed", "Denied", "Reprocessing", "Paid - Pending", "Transferred", "Unable to Reach", "Other"],
+    "phoneSource": "in production the dialed number comes from lookupPayerPhone(encounter.primaryPayer) in src/lib/payer-phone-directory"
   }
 }
