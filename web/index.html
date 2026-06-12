@@ -15,7 +15,8 @@ body{font-family:-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:
 header{display:flex;align-items:center;gap:12px;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel)}
 header h1{font-size:16px;font-weight:600}
 header .tag{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.08em;text-transform:uppercase}
-.layout{display:grid;grid-template-columns:300px 1fr 280px;flex:1;min-height:0}
+.layout{display:grid;grid-template-columns:300px 1fr 348px;flex:1;min-height:0}
+@media(max-width:1280px){.layout{grid-template-columns:280px 1fr 320px}}
 
 /* ---- left: payers + settings ---- */
 .side{border-right:1px solid var(--line);background:var(--panel);padding:18px;overflow-y:auto}
@@ -46,7 +47,8 @@ button.primary:hover{background:#7E211C}
 /* ---- fixture panel ---- */
 .fix{border:1.5px solid #EEDFC2;background:#FDF8EE;border-radius:12px;padding:12px 13px;margin-bottom:18px}
 .fix h3{font-size:11px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;color:#7A5A14;margin-bottom:8px}
-.fix .kv{border-color:#F0E6CF}
+.fix .kv{border-color:#F0E6CF;gap:12px}
+.fix .kv b{word-break:break-all;text-align:right;letter-spacing:.04em}
 .fix .kv b{cursor:pointer;border-bottom:1px dashed #C9A86A}
 .fix .kv b:hover{color:var(--ruby)}
 .fix .exp{font-size:10px;font-family:var(--mono);padding:1px 7px;border-radius:100px;margin-left:6px}
@@ -94,7 +96,7 @@ button.primary:hover{background:#7E211C}
 .pad button small{font-size:7.5px;font-weight:400;letter-spacing:1.5px;color:var(--faint)}
 .pad button.wide{grid-column:1/-1;height:30px;font-size:11px;letter-spacing:.08em;color:var(--soft)}
 .entry{flex:1;display:flex;flex-direction:column;gap:8px}
-.entry .queue{font-family:var(--mono);font-size:15px;letter-spacing:.15em;min-height:24px;border-bottom:2px solid var(--line);padding:2px 4px}
+.entry .queue{font-family:var(--mono);font-size:15px;letter-spacing:.08em;min-height:24px;border-bottom:2px solid var(--line);padding:2px 4px;overflow-x:auto;white-space:nowrap;scrollbar-width:thin}
 .entry .row{display:flex;gap:8px}
 .entry input[type=text]{flex:1;font:inherit;font-size:14px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:var(--bg)}
 .entry .help{font-size:11px;color:var(--faint)}
@@ -148,7 +150,7 @@ button.primary:hover{background:#7E211C}
       <b id="payerName">No call</b><span class="num" id="payerNum"></span>
       <span class="state idle" id="state">idle</span>
     </div>
-    <div class="feed" id="feed"></div>
+    <div class="feed" id="feed" aria-live="polite"></div>
     <div class="dock disabled" id="dock">
       <div class="pad" id="pad"></div>
       <div class="entry">

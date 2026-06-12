@@ -86,6 +86,10 @@ async function handleApi(req, res, path) {
       return send(res, 200, { event });
     }
     if (req.method === "GET" && m[2] === "/rep") {
+      const node = call.tree.nodes[call.nodeId];
+      if (!call._ended && node?.kind !== "hold") {
+        return send(res, 409, { error: "call is not on hold; /rep only resolves from a hold state" });
+      }
       const event = await call.waitForRep();
       return send(res, 200, { event });
     }

@@ -72,7 +72,8 @@ The moment that file exists, `npm test` stops skipping
 fixture's `expected` exactly, from one call.
 
 Rules:
-- One call per run. The test counts calls.
+- One call per run. (Honor system in the sandbox; production transport
+  enforces it. Redialing per-claim defeats the entire economics.)
 - No hardcoding the expected outputs (the test also runs a DOS your
   fixture has never seen and checks you report it as `not_found`).
 - Statuses are parsed from readout TEXT. Keyword matching is fine for v1;
