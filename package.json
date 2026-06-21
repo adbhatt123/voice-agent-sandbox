@@ -9,6 +9,7 @@
     "test": "node --test",
     "call": "node src/cli.js",
     "demo": "node src/agent-example.js",
-    "web": "node src/server.js"
+    "web": "node src/server.js",
+    "twilio-ivr": "node src/twilio-ivr.js"
   }
 }
