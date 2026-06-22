@@ -4,12 +4,17 @@
   "private": true,
   "description": "PHI-free testing environment for payer-call automation: mock IVR engine, fictional payer trees, phonetic library test harness, masking logger.",
   "type": "module",
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "test": "node --test",
     "call": "node src/cli.js",
     "demo": "node src/agent-example.js",
     "web": "node src/server.js",
     "twilio-ivr": "node src/twilio-ivr.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2"
   }
 }
