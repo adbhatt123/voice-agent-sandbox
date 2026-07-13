@@ -8,13 +8,20 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "node --test",
+    "test": "node --import tsx --test \"test/**/*.test.js\" \"test/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit",
     "call": "node src/cli.js",
     "demo": "node src/agent-example.js",
     "web": "node src/server.js",
-    "twilio-ivr": "node src/twilio-ivr.js"
+    "twilio-ivr": "node src/twilio-ivr.js",
+    "twilio-v3": "tsx src/twilio-ivr-v3.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
   }
 }
